@@ -304,7 +304,7 @@ time {
   border-top-right-radius: 4px;
   color: #000000;
   background-color: #ddedfa;
-  display: block;
+  display: inline-block;
   margin-left: 20px;
   padding: 0 10px 0 12px;
   position: relative;
