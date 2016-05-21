@@ -1,13 +1,185 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Unicorns be here</title>
-    <link rel="stylesheet"
-    href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <title>Joe Marrama</title>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
-    <h1>This is Joes new homepage</h1>
-    <p>Super cool stuff, right?</p>
-    <p>This is a work in progress. If you need to contact me, email me at (the first letter of my first name)(my last name)@gmail.com.</p>
+
+    <div id="layout">
+
+      <!-- Menu toggle -->
+      <a href="#menu" id="menuLink" class="menu-link">
+        <!-- Hamburger icon -->
+        <span></span>
+      </a>
+
+      <div id="menu">
+        <div class="pure-menu">
+          <!-- <a class="pure-menu-heading" href="/">Joe</a> -->
+          <ul class="pure-menu-list">
+
+            <li class="pure-menu-item">
+              <a href="#about" class="pure-menu-link">About</a>
+            </li>
+
+            <li class="pure-menu-item">
+              <a href="#experience" class="pure-menu-link">Experience</a>
+            </li>
+
+            <li class="pure-menu-item">
+              <a href="#opensource" class="pure-menu-link">Opensource</a>
+            </li>
+
+            <li class="pure-menu-item">
+              <a href="#writings" class="pure-menu-link">Writings</a>
+            </li>
+
+            <li class="pure-menu-item">
+              <a href="#hobbies" class="pure-menu-link">Hobbies</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="main">
+
+        <div class="header">
+          <h1>Joe Marrama</h1>
+          <h2>
+            Always learning, always building
+          </h2>
+        </div>
+
+        <div class="content">
+          <h2 class="content-subhead" id="about">About</h2>
+          <p>
+          Hi! I'm a software engineer living in the Bay Area. In the recent
+          past I worked at Box and before that I went to school at Stanford.
+          I was born and raised in Oakland, making me a lifetime Bay Area
+          resident. I'm currently between
+          jobs pursuing all of my outside hobbies and traveling around in my
+          van. Outside of work I love to rock climb, surf, ski, build things
+          (primarily using wood), cook, and read as much as possible.
+          </p>
+
+        </div>
+
+        <div class="content">
+          <h2 class="content-subhead" id="experience">Experience</h2>
+          <ul>
+
+            <li class="resume-item">
+              <h3 class="resume-head"><a href="https://box.com">Box</a></h3>
+              <div class="resume-subhead">Software engineer</div>
+              <p>
+              I led the successful migration of Box's monolithic PHP codebase
+              to <a href="http://hhvm.com">HHVM</a>. Apart from that, I worked on many different things,
+              including file storage, configuration delivery, PHP extensions,
+              and more. If you would like to know more about my time at Box,
+              feel free to check out my <a
+                href="https://joebox.box.com/s/1paqq9cmhyjy0lvmgdf6">resume</a>.
+              </p>
+            </li>
+
+            <li class="resume-item">
+              <h3 class="resume-head">Stanford</h3>
+              <div class="resume-subhead">Undergrad and Masters Student</div>
+              <p>
+              I earned my BS in <a href="https://symsys.stanford.edu/">Symbolic
+                Systems</a> and MS in <a href="http://www-cs.stanford.edu/">Computer Science</a>
+              over the course of 5 years at
+              Stanford. In that time I held a couple jobs, did a couple of
+              internships, and learned a few things. See my <a
+                href="https://joebox.box.com/s/1paqq9cmhyjy0lvmgdf6">resume</a>
+              for more details.
+              </p>
+            </li>
+
+          </ul>
+        </div>
+
+        <div class="content">
+          <h2 class="content-subhead" id="opensource">Open Source</h2>
+          <p>
+          Over my time at Box, I led the development of a couple open source
+          projects and contributed to others. Open source is very important to
+          me (and Box), and I'm happy to continue to maintain multiple
+          projects. You can peruse all of my contributions from my <a
+                                      href="https://github.com/jmarrama">GitHub
+                                      page</a>.
+          </p>
+
+          <ul>
+            <li class="resume-item">
+              <h3 class="resume-head"><a
+                  href="https://github.com/box/augmented_types">Augmented Types</a></h3>
+              <p>
+              Augmented Types is a PHP extension for the Zend runtime that
+              enforces function argument and return type
+              annotations at runtime. I am the primary developer and maintainer
+              of the project.
+              </p>
+            </li>
+
+            <li class="resume-item">
+              <h3 class="resume-head"><a
+                  href="https://github.com/facebook/hhvm">HHVM</a></h3>
+              <p>
+              I made many contributions back to HHVM over the course of
+              migrating Box's codebase to run on HHVM.
+              </p>
+            </li>
+
+            <li class="resume-item">
+              <h3 class="resume-head"><a
+                  href="https://github.com/box/fast_assert">Fast Assert</a></h3>
+              <p>
+              Fast assert is a PHP extension for the Zend runtime that provides
+              a fast way of making assertions in PHP code.
+              </p>
+            </li>
+          </ul>
+
+        </div>
+
+        <div class="content">
+          <h2 class="content-subhead" id="writings">Writings</h2>
+          <ul>
+
+            <li class="resume-item">
+              <h3 class="resume-head"><a
+                  href="https://code.facebook.com/posts/1607907626123431/under-the-hood-box-s-hhvm-migration/">Migrating to HHVM at
+                Box</a></h3>
+              <p>
+              I wrote this for Facebook's tech blog describing the details and
+              potential dangers of migrating to HHVM at Box.
+              </p>
+            </li>
+
+            <li class="resume-item">
+              <h3 class="resume-head"><a
+                  href="https://www.box.com/blog/making-php-safer-introducing-augmented-types/">Introducing Augmented Types</a></h3>
+              <p>
+              This announcement describes Augmented Types, its motivation, and
+              the technical details of how it works.
+              </p>
+            </li>
+
+          </ul>
+        </div>
+
+        <div class="content">
+          <h2 class="content-subhead" id="hobbies">Hobbies</h2>
+          <p>
+          Coming soon....
+          </p>
+        </div>
+
+    </div>
+
+    <script src="/js/sidebar.js"></script>
   </body>
 </html>
