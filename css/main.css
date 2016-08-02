@@ -284,3 +284,12 @@ Hides the menu at `48em`, but modify this based on your app's needs.
     }
 }
 
+/* unvisited link */
+a:link {
+  color: dimgrey;
+}
+
+/* visited link */
+a:visited {
+  color: darkgreen;
+}
