@@ -1,82 +1,840 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Joe Marrama</title>
-    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
-    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/grids-responsive-min.css">
-    <link rel="stylesheet" href="/css/main.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-  </head>
-  <body>
-
-    <div id="layout">
-
-      <!-- Menu toggle -->
-      <a href="#menu" id="menuLink" class="menu-link">
-        <!-- Hamburger icon -->
-        <span></span>
-      </a>
-
-      <div id="menu">
-        <div class="pure-menu">
-          <!-- <a class="pure-menu-heading" href="/">Joe</a> -->
-          <ul class="pure-menu-list">
-
-            <li class="pure-menu-item">
-              <a href="#about" class="pure-menu-link">About</a>
-            </li>
-
-            <li class="pure-menu-item">
-              <a href="#contact" class="pure-menu-link">Contact Me</a>
-            </li>
-
-          </ul>
-        </div>
-      </div>
-
-      <div id="main">
-
-        <div class="header pure-g">
-          <div class="pure-u-1 pure-u-md-1-3">
-            <img class="headshot" src="/img/headshot.jpg" height="200">
-          </div>
-          <div class="pure-u-1 pure-u-md-2-3 header-text-div">
-            <span class="header-text">
-              <h1>Joe Marrama</h1>
-              <h2>
-                Always learning, always building
-              </h2>
-            </span>
-          </div>
-        </div>
-
-        <div class="content">
-          <h2 class="content-subhead" id="about">About</h2>
-          <p>
-          Hi! I'm Joe Marrama. I'll do something with this site eventually....
-          </p>
-        </div>
-
-        <div class="content">
-          <h2 class="content-subhead" id="contact">Contact Me</h2>
-          <p>
-          The best way to contact me is at my email, which is (first letter of my first name)(my last
-          name)@gmail.com.
-          </p>
-        </div>
-
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Joe Marrama</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;700&display=swap');
+    
+    :root {
+      --bg: #0a0a0f;
+      --cyan: #00f5ff;
+      --magenta: #ff00ff;
+      --green: #00ff88;
+      --yellow: #ffee00;
+      --purple: #8844ff;
+      --text: #e0e0e0;
+      --text-dim: #666680;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+    
+    #microscope {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    
+    .ui-layer {
+      position: fixed;
+      z-index: 10;
+      pointer-events: none;
+    }
+    
+    .ui-layer > * {
+      pointer-events: auto;
+    }
+    
+    /* Header */
+    .header {
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, rgba(10,10,15,0.9) 0%, transparent 100%);
+    }
+    
+    .logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--cyan);
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+    
+    .zoom-indicator {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-dim);
+      background: rgba(0,0,0,0.5);
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(0,245,255,0.2);
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      top: 50%;
+      right: 32px;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .nav-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .nav-btn:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 20px rgba(0,245,255,0.3);
+      transform: scale(1.1);
+    }
+    
+    .nav-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    /* Bottom panel */
+    .bottom-panel {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 24px 32px;
+      background: linear-gradient(to top, rgba(10,10,15,0.95) 0%, transparent 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    
+    .title-section h1 {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, var(--cyan), var(--magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    
+    .title-section .subtitle {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+    
+    .sample-counter {
+      text-align: right;
+    }
+    
+    .sample-counter .label {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+    
+    .sample-counter .count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 24px;
+      color: var(--green);
+    }
+    
+    .sample-counter .count span {
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+    
+    /* Floating info panel */
+    .info-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(10,10,15,0.95);
+      border: 1px solid rgba(0,245,255,0.3);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      display: none;
+    }
+    
+    .info-panel.visible {
+      display: block;
+      animation: popIn 0.3s ease;
+    }
+    
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+    
+    .info-panel h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: var(--cyan);
+    }
+    
+    .info-panel p {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+    
+    .info-panel .close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 20px;
+    }
+    
+    /* Instructions */
+    .instructions {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: center;
+      opacity: 0.6;
+      z-index: 5;
+      transition: opacity 0.5s;
+    }
+    
+    .instructions.hidden {
+      opacity: 0;
+    }
+    
+    /* Collected samples drawer */
+    .samples-drawer {
+      position: fixed;
+      bottom: 100px;
+      left: 32px;
+      display: flex;
+      gap: 8px;
+      z-index: 5;
+    }
+    
+    .sample-orb {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      opacity: 0.3;
+      transition: all 0.3s ease;
+    }
+    
+    .sample-orb.collected {
+      opacity: 1;
+      box-shadow: 0 0 20px currentColor;
+    }
+    
+    /* DNA helix decoration */
+    .dna-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.1;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="microscope"></canvas>
+  
+  <div class="ui-layer header">
+    <div class="logo">◈ Microscope</div>
+    <div class="zoom-indicator">zoom: <span id="zoomLevel">1.0</span>x</div>
+  </div>
+  
+  <div class="ui-layer sidebar">
+    <button class="nav-btn" id="zoomIn" title="Zoom In">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/>
+      </svg>
+    </button>
+    <button class="nav-btn" id="zoomOut" title="Zoom Out">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M8 11h6"/>
+      </svg>
+    </button>
+    <button class="nav-btn" id="resetView" title="Reset View">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+      </svg>
+    </button>
+  </div>
+  
+  <div class="ui-layer bottom-panel">
+    <div class="title-section">
+      <h1>Joe Marrama</h1>
+      <div class="subtitle">// Staff Software Engineer @ Insitro</div>
     </div>
+    <div class="sample-counter">
+      <div class="label">Samples Discovered</div>
+      <div class="count"><span id="collectedCount">0</span> <span>/ 6</span></div>
+    </div>
+  </div>
+  
+  <div class="samples-drawer" id="samplesDrawer"></div>
+  
+  <div class="instructions" id="instructions">
+    scroll to zoom · drag to pan · click cells to discover samples
+  </div>
+  
+  <div class="info-panel" id="infoPanel">
+    <button class="close" id="closePanel">×</button>
+    <h3 id="infoTitle">Sample</h3>
+    <p id="infoText">Description</p>
+  </div>
 
-    <script src="/js/sidebar.js"></script>
-    <script>
-(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new
-    Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-ga('create', 'UA-38972479-1', 'auto');
-ga('send', 'pageview');
-    </script>
-  </body>
+  <script>
+    const canvas = document.getElementById('microscope');
+    const ctx = canvas.getContext('2d');
+    
+    // State
+    let width, height;
+    let zoom = 1;
+    let panX = 0, panY = 0;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let panStart = { x: 0, y: 0 };
+    let time = 0;
+    let hasInteracted = false;
+    let collectedSamples = new Set();
+    
+    // Sample data
+    const samples = [
+      {
+        id: 'e.coli',
+        name: 'E. Coli',
+        color: '#00ff88',
+        description: 'Escherichia coli - a rod-shaped bacterium commonly used in molecular biology and biotech. The workhorse of genetic engineering.',
+        x: 0.2,
+        y: 0.3,
+        type: 'bacteria'
+      },
+      {
+        id: 'yeast',
+        name: 'Yeast',
+        color: '#ffee00',
+        description: 'Saccharomyces cerevisiae - eukaryotic model organism for studying cell biology. Also makes bread rise and beer flow.',
+        x: 0.7,
+        y: 0.25,
+        type: 'fungi'
+      },
+      {
+        id: 'heLa',
+        name: 'HeLa Cells',
+        color: '#ff00ff',
+        description: 'Immortal human cell line derived from Henrietta Lacks. The foundation of modern medical research and drug development.',
+        x: 0.5,
+        y: 0.6,
+        type: 'mammalian'
+      },
+      {
+        id: 'plasmid',
+        name: 'Plasmid DNA',
+        color: '#00f5ff',
+        description: 'Circular extrachromosomal DNA vectors used for gene delivery, cloning, and recombinant protein expression.',
+        x: 0.3,
+        y: 0.7,
+        type: 'dna'
+      },
+      {
+        id: 'protein',
+        name: 'Protein Crystal',
+        color: '#8844ff',
+        description: 'Structural protein crystal - the key to understanding molecular function. X-ray crystallography reveals the secrets of life at atomic resolution.',
+        x: 0.8,
+        y: 0.65,
+        type: 'protein'
+      },
+      {
+        id: 'liposome',
+        name: 'Liposome',
+        color: '#ff6644',
+        description: 'Phospholipid vesicle - nature\'s drug delivery vehicle. Synthetic liposomes enable targeted therapeutics.',
+        x: 0.15,
+        y: 0.55,
+        type: 'vesicle'
+      }
+    ];
+    
+    // Initialize drawer
+    const drawer = document.getElementById('samplesDrawer');
+    samples.forEach((s, i) => {
+      const orb = document.createElement('div');
+      orb.className = 'sample-orb';
+      orb.style.color = s.color;
+      orb.id = `orb-${s.id}`;
+      orb.title = s.name;
+      drawer.appendChild(orb);
+    });
+    
+    // Resize
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    
+    // Cell class
+    class Cell {
+      constructor(x, y, size, color, type) {
+        this.x = x;
+        this.y = y;
+        this.baseX = x;
+        this.baseY = y;
+        this.size = size;
+        this.baseSize = size;
+        this.color = color;
+        this.type = type;
+        this.phase = Math.random() * Math.PI * 2;
+        this.drift = Math.random() * 0.5 - 0.25;
+        this.visited = false;
+      }
+      
+      update(t) {
+        this.x = this.baseX + Math.sin(t * 0.5 + this.phase) * 20;
+        this.y = this.baseY + Math.cos(t * 0.3 + this.phase) * 15;
+        
+        // Pulse size
+        this.size = this.baseSize * (1 + Math.sin(t * 2 + this.phase) * 0.1);
+      }
+      
+      draw() {
+        const sx = (this.x - panX) * zoom + width / 2;
+        const sy = (this.y - panY) * zoom + height / 2;
+        const ss = this.size * zoom;
+        
+        if (sx < -ss || sx > width + ss || sy < -ss || sy > height + ss) return;
+        
+        ctx.save();
+        ctx.globalAlpha = 0.8;
+        
+        if (this.type === 'bacteria') {
+          // Rod shape
+          ctx.translate(sx, sy);
+          ctx.rotate(t * 0.2 + this.phase);
+          ctx.fillStyle = this.color;
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, ss * 1.5, ss * 0.6, 0, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Flagella
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = 1;
+          ctx.globalAlpha = 0.3;
+          ctx.beginPath();
+          ctx.moveTo(-ss * 1.5, 0);
+          ctx.quadraticCurveTo(-ss * 3, -ss, -ss * 4, 0);
+          ctx.stroke();
+        } else if (this.type === 'mammalian') {
+          // Round cell with nucleus
+          ctx.translate(sx, sy);
+          ctx.fillStyle = this.color;
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 25;
+          ctx.beginPath();
+          ctx.arc(0, 0, ss, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Nucleus
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
+          ctx.globalAlpha = 0.6;
+          ctx.beginPath();
+          ctx.arc(0, 0, ss * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (this.type === 'dna') {
+          // Spiral DNA
+          ctx.translate(sx, sy);
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = 2;
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 15;
+          
+          for (let i = 0; i < 3; i++) {
+            ctx.beginPath();
+            for (let j = 0; j < 20; j++) {
+              const angle = (j / 20) * Math.PI * 4 + t;
+              const r = ss * 0.3 * (1 - j / 40);
+              const px = Math.cos(angle + i * Math.PI / 3) * r;
+              const py = Math.sin(angle + i * Math.PI / 3) * r * 0.5;
+              if (j === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+          }
+        } else if (this.type === 'protein') {
+          // Crystal shape
+          ctx.translate(sx, sy);
+          ctx.fillStyle = this.color;
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 20;
+          
+          ctx.beginPath();
+          for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+            const r = ss * (0.8 + Math.sin(t * 3 + i) * 0.2);
+            const px = Math.cos(angle) * r;
+            const py = Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.fill();
+        } else if (this.type === 'vesicle') {
+          // Lipid bilayer sphere
+          ctx.translate(sx, sy);
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = 3;
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 20;
+          ctx.globalAlpha = 0.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, ss, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Inner
+          ctx.globalAlpha = 0.2;
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(0, 0, ss * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Default - circle
+          ctx.translate(sx, sy);
+          ctx.fillStyle = this.color;
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.arc(0, 0, ss, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        ctx.restore();
+      }
+      
+      contains(px, py) {
+        const sx = (this.x - panX) * zoom + width / 2;
+        const sy = (this.y - panY) * zoom + height / 2;
+        const dist = Math.hypot(px - sx, py - sy);
+        return dist < this.size * zoom * 2;
+      }
+    }
+    
+    // Background particles
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+      
+      reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.size = Math.random() * 2 + 0.5;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = (Math.random() - 0.5) * 0.3;
+        this.color = ['#00f5ff', '#ff00ff', '#00ff88', '#ffee00', '#8844ff'][Math.floor(Math.random() * 5)];
+        this.alpha = Math.random() * 0.3 + 0.1;
+      }
+      
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        
+        if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
+          this.reset();
+        }
+      }
+      
+      draw() {
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // Create cells from samples
+    const cells = samples.map(s => {
+      return new Cell(
+        (s.x - 0.5) * Math.min(width, height) * 0.8,
+        (s.y - 0.5) * Math.min(width, height) * 0.8,
+        40 + Math.random() * 20,
+        s.color,
+        s.type
+      );
+    });
+    
+    // Background particles
+    const particles = [];
+    for (let i = 0; i < 100; i++) {
+      particles.push(new Particle());
+    }
+    
+    // Grid lines (microscope reticle)
+    function drawReticle() {
+      ctx.strokeStyle = 'rgba(0,245,255,0.1)';
+      ctx.lineWidth = 1;
+      
+      const cx = width / 2;
+      const cy = height / 2;
+      const gridSize = 100 * zoom;
+      
+      // Vertical lines
+      for (let x = cx % gridSize; x < width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      
+      // Horizontal lines
+      for (let y = cy % gridSize; y < height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      
+      // Crosshair
+      ctx.strokeStyle = 'rgba(0,245,255,0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - 50, cy);
+      ctx.lineTo(cx + 50, cy);
+      ctx.moveTo(cx, cy - 50);
+      ctx.lineTo(cx, cy + 50);
+      ctx.stroke();
+      
+      // Circle
+      ctx.beginPath();
+      ctx.arc(cx, cy, 100 * zoom, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    
+    // Animation loop
+    function animate() {
+      time += 0.016;
+      
+      // Clear
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, width, height);
+      
+      // Draw particles
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      
+      // Draw reticle
+      drawReticle();
+      
+      // Draw cells
+      cells.forEach(cell => {
+        cell.update(time);
+        cell.draw();
+      });
+      
+      // Vignette effect
+      const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height) * 0.7);
+      gradient.addColorStop(0, 'transparent');
+      gradient.addColorStop(1, 'rgba(0,0,0,0.7)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+      
+      requestAnimationFrame(animate);
+    }
+    animate();
+    
+    // Interactions
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      zoom = Math.max(0.2, Math.min(5, zoom * zoomFactor));
+      document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
+      
+      if (!hasInteracted) {
+        hasInteracted = true;
+        document.getElementById('instructions').classList.add('hidden');
+      }
+    });
+    
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      dragStart = { x: e.clientX, y: e.clientY };
+      panStart = { x: panX, y: panY };
+    });
+    
+    canvas.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        panX = panStart.x - (e.clientX - dragStart.x) / zoom;
+        panY = panStart.y - (e.clientY - dragStart.y) / zoom;
+        
+        if (!hasInteracted) {
+          hasInteracted = true;
+          document.getElementById('instructions').classList.add('hidden');
+        }
+      }
+    });
+    
+    canvas.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+    
+    canvas.addEventListener('click', (e) => {
+      if (isDragging) return;
+      
+      cells.forEach(cell => {
+        if (cell.contains(e.clientX, e.clientY)) {
+          showInfo(cell);
+        }
+      });
+    });
+    
+    // Touch support
+    let touchStart = null;
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        panStart = { x: panX, y: panY };
+      }
+    });
+    
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && touchStart) {
+        panX = panStart.x - (e.touches[0].clientX - touchStart.x) / zoom;
+        panY = panStart.y - (e.touches[0].clientY - touchStart.y) / zoom;
+        
+        if (!hasInteracted) {
+          hasInteracted = true;
+          document.getElementById('instructions').classList.add('hidden');
+        }
+      } else if (e.touches.length === 2) {
+        // Pinch zoom
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        if (touchStart.dist) {
+          const zoomFactor = dist / touchStart.dist;
+          zoom = Math.max(0.2, Math.min(5, zoom * zoomFactor));
+          document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
+        }
+        touchStart.dist = dist;
+      }
+    });
+    
+    canvas.addEventListener('touchend', () => {
+      touchStart = null;
+    });
+    
+    // UI Buttons
+    document.getElementById('zoomIn').addEventListener('click', () => {
+      zoom = Math.min(5, zoom * 1.3);
+      document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
+    });
+    
+    document.getElementById('zoomOut').addEventListener('click', () => {
+      zoom = Math.max(0.2, zoom * 0.7);
+      document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
+    });
+    
+    document.getElementById('resetView').addEventListener('click', () => {
+      zoom = 1;
+      panX = 0;
+      panY = 0;
+      document.getElementById('zoomLevel').textContent = '1.0';
+    });
+    
+    // Info panel
+    function showInfo(cell) {
+      const sample = samples.find(s => s.id === cell.type);
+      if (!sample) return;
+      
+      document.getElementById('infoTitle').textContent = sample.name;
+      document.getElementById('infoTitle').style.color = sample.color;
+      document.getElementById('infoText').textContent = sample.description;
+      document.getElementById('infoPanel').classList.add('visible');
+      
+      // Collect sample
+      if (!collectedSamples.has(sample.id)) {
+        collectedSamples.add(sample.id);
+        document.getElementById(`orb-${sample.id}`).classList.add('collected');
+        document.getElementById('collectedCount').textContent = collectedSamples.size;
+      }
+    }
+    
+    document.getElementById('closePanel').addEventListener('click', () => {
+      document.getElementById('infoPanel').classList.remove('visible');
+    });
+    
+    document.getElementById('infoPanel').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('infoPanel')) {
+        document.getElementById('infoPanel').classList.remove('visible');
+      }
+    });
+    
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.getElementById('infoPanel').classList.remove('visible');
+      }
+    });
+  </script>
+</body>
 </html>
