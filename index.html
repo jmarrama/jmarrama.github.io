@@ -315,7 +315,6 @@
   <div class="ui-layer bottom-panel">
     <div class="title-section">
       <h1>Joe Marrama</h1>
-      <div class="subtitle">// Staff Software Engineer @ Insitro</div>
     </div>
     <div class="sample-counter">
       <div class="label">Samples Discovered</div>
@@ -451,7 +450,7 @@
         this.size = this.baseSize * (1 + Math.sin(t * 2 + this.phase) * 0.1);
       }
       
-      draw() {
+      draw(t) {
         const sx = (this.x - panX) * zoom + width / 2;
         const sy = (this.y - panY) * zoom + height / 2;
         const ss = this.size * zoom;
@@ -686,7 +685,7 @@
       // Draw cells
       cells.forEach(cell => {
         cell.update(time);
-        cell.draw();
+        cell.draw(time);
       });
       
       // Vignette effect
