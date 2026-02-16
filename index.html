@@ -248,6 +248,31 @@
       opacity: 0;
     }
     
+    /* Channel legend */
+    .channel-legend {
+      position: fixed;
+      bottom: 24px;
+      left: 32px;
+      display: flex;
+      gap: 16px;
+      z-index: 10;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+    }
+    
+    .channel-legend .channel {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.7;
+    }
+    
+    .channel-legend .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
     /* Collected samples drawer */
     .samples-drawer {
       position: fixed;
@@ -328,6 +353,13 @@
     scroll to zoom · drag to pan · click cells to discover samples
   </div>
   
+  <div class="channel-legend">
+    <div class="channel"><span class="dot" style="background:#2E86AB"></span>DNA</div>
+    <div class="channel"><span class="dot" style="background:#28A745"></span>Actin</div>
+    <div class="channel"><span class="dot" style="background:#DC3545"></span>Mito</div>
+    <div class="channel"><span class="dot" style="background:#FFC107"></span>ER</div>
+  </div>
+  
   <div class="info-panel" id="infoPanel">
     <button class="close" id="closePanel">×</button>
     <h3 id="infoTitle">Sample</h3>
@@ -349,61 +381,69 @@
     let hasInteracted = false;
     let collectedSamples = new Set();
     
-    // Sample data
+    // CellPaint-style channel colors (simulating CP channels)
+    const CHANNELS = {
+      dna: { color: '#2E86AB', name: 'DNA (Hoechst)' },      // Blue - nucleus
+      actin: { color: '#28A745', name: 'Actin (Phalloidin)' }, // Green - cytoskeleton
+      mito: { color: '#DC3545', name: 'Mitochondria' },       // Red
+      er: { color: '#FFC107', name: 'ER (Concanavalin)' }     // Yellow
+    };
+    
+    // Sample data - A549 lung epithelial cells with CellPaint channels
     const samples = [
       {
-        id: 'e.coli',
-        name: 'E. Coli',
-        color: '#00ff88',
-        description: 'Escherichia coli - a rod-shaped bacterium commonly used in molecular biology and biotech. The workhorse of genetic engineering.',
-        x: 0.2,
-        y: 0.3,
-        type: 'bacteria'
-      },
-      {
-        id: 'yeast',
-        name: 'Yeast',
-        color: '#ffee00',
-        description: 'Saccharomyces cerevisiae - eukaryotic model organism for studying cell biology. Also makes bread rise and beer flow.',
-        x: 0.7,
-        y: 0.25,
-        type: 'fungi'
-      },
-      {
-        id: 'heLa',
-        name: 'HeLa Cells',
-        color: '#ff00ff',
-        description: 'Immortal human cell line derived from Henrietta Lacks. The foundation of modern medical research and drug development.',
-        x: 0.5,
-        y: 0.6,
-        type: 'mammalian'
-      },
-      {
-        id: 'plasmid',
-        name: 'Plasmid DNA',
-        color: '#00f5ff',
-        description: 'Circular extrachromosomal DNA vectors used for gene delivery, cloning, and recombinant protein expression.',
+        id: 'a549-1',
+        name: 'A549 Cells',
+        channels: ['dna', 'actin', 'mito', 'er'],
+        description: 'Human alveolar type II epithelial cells from lung adenocarcinoma. The workhorse of respiratory research and drug discovery.',
         x: 0.3,
+        y: 0.35,
+        type: 'a549'
+      },
+      {
+        id: 'a549-2',
+        name: 'A549 Cells',
+        channels: ['dna', 'actin', 'mito', 'er'],
+        description: 'Adherent epithelial cells with characteristic cobblestone morphology. Frequently used in COVID-19 and lung cancer studies.',
+        x: 0.65,
+        y: 0.4,
+        type: 'a549'
+      },
+      {
+        id: 'a549-3',
+        name: 'A549 Cells',
+        channels: ['dna', 'actin', 'mito', 'er'],
+        description: 'These cells have large nuclei with prominent nucleoli - visible in the DNA channel. The actin network gives the cell its shape.',
+        x: 0.45,
+        y: 0.6,
+        type: 'a549'
+      },
+      {
+        id: 'a549-4',
+        name: 'A549 Cells',
+        channels: ['dna', 'actin', 'mito', 'er'],
+        description: 'Mitochondria clustered around the nucleus - typical perinuclear distribution. ER network spans throughout the cytoplasm.',
+        x: 0.75,
         y: 0.7,
-        type: 'dna'
+        type: 'a549'
       },
       {
-        id: 'protein',
-        name: 'Protein Crystal',
-        color: '#8844ff',
-        description: 'Structural protein crystal - the key to understanding molecular function. X-ray crystallography reveals the secrets of life at atomic resolution.',
-        x: 0.8,
+        id: 'a549-5',
+        name: 'A549 Cells',
+        channels: ['dna', 'actin', 'mito', 'er'],
+        description: 'Cell in mitosis - note the condensed chromosomes (bright blue DNA signal) and disassembled actin network.',
+        x: 0.2,
         y: 0.65,
-        type: 'protein'
+        type: 'a549'
       },
       {
-        id: 'liposome',
-        name: 'Liposome',
-        color: '#ff6644',
-        description: 'Phospholipid vesicle - nature\'s drug delivery vehicle. Synthetic liposomes enable targeted therapeutics.',
-        x: 0.15,
-        y: 0.55,
-        type: 'vesicle'
+        id: 'a549-6',
+        name: 'A549 Cells',
+        channels: ['dna', 'actin', 'mito', 'er'],
+        description: 'Confluent monolayer region - cells showing contact inhibition. The bright actin edges show where cells touch.',
+        x: 0.55,
+        y: 0.2,
+        type: 'a549'
       }
     ];
     
@@ -412,7 +452,7 @@
     samples.forEach((s, i) => {
       const orb = document.createElement('div');
       orb.className = 'sample-orb';
-      orb.style.color = s.color;
+      orb.style.color = CHANNELS[s.channels[0]].color;
       orb.id = `orb-${s.id}`;
       orb.title = s.name;
       drawer.appendChild(orb);
@@ -426,28 +466,70 @@
     window.addEventListener('resize', resize);
     resize();
     
-    // Cell class
+    // A549 Cell class - realistic cell painting
     class Cell {
-      constructor(x, y, size, color, type) {
+      constructor(x, y, size, channels, type) {
         this.x = x;
         this.y = y;
         this.baseX = x;
         this.baseY = y;
         this.size = size;
         this.baseSize = size;
-        this.color = color;
+        this.channels = channels;
         this.type = type;
         this.phase = Math.random() * Math.PI * 2;
         this.drift = Math.random() * 0.5 - 0.25;
         this.visited = false;
+        
+        // Generate realistic cell membrane shape (irregular ellipse)
+        this.membranePoints = [];
+        const numPoints = 32;
+        for (let i = 0; i < numPoints; i++) {
+          const angle = (i / numPoints) * Math.PI * 2;
+          const variance = 0.85 + Math.random() * 0.3;
+          this.membranePoints.push({
+            angle,
+            radius: variance,
+            speed: 0.3 + Math.random() * 0.4
+          });
+        }
+        
+        // Generate nucleus position (slightly off-center)
+        this.nucOffsetX = (Math.random() - 0.5) * 0.15;
+        this.nucOffsetY = (Math.random() - 0.5) * 0.15;
+        
+        // Generate mitochondrial positions
+        this.mitochondria = [];
+        for (let i = 0; i < 8; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 0.3 + Math.random() * 0.4;
+          this.mitochondria.push({
+            angle,
+            dist,
+            size: 0.8 + Math.random() * 0.4,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+        
+        // ER network points
+        this.erPoints = [];
+        for (let i = 0; i < 20; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 0.2 + Math.random() * 0.5;
+          this.erPoints.push({
+            angle,
+            dist,
+            size: 0.3 + Math.random() * 0.3
+          });
+        }
       }
       
       update(t) {
         this.x = this.baseX + Math.sin(t * 0.5 + this.phase) * 20;
         this.y = this.baseY + Math.cos(t * 0.3 + this.phase) * 15;
         
-        // Pulse size
-        this.size = this.baseSize * (1 + Math.sin(t * 2 + this.phase) * 0.1);
+        // Gentle pulsing
+        this.size = this.baseSize * (1 + Math.sin(t * 2 + this.phase) * 0.05);
       }
       
       draw(t) {
@@ -455,112 +537,89 @@
         const sy = (this.y - panY) * zoom + height / 2;
         const ss = this.size * zoom;
         
-        if (sx < -ss || sx > width + ss || sy < -ss || sy > height + ss) return;
+        if (sx < -ss * 2 || sx > width + ss * 2 || sy < -ss * 2 || sy > height + ss * 2) return;
         
         ctx.save();
-        ctx.globalAlpha = 0.8;
         
-        if (this.type === 'bacteria') {
-          // Rod shape
-          ctx.translate(sx, sy);
-          ctx.rotate(t * 0.2 + this.phase);
-          ctx.fillStyle = this.color;
-          ctx.shadowColor = this.color;
-          ctx.shadowBlur = 20;
-          ctx.beginPath();
-          ctx.ellipse(0, 0, ss * 1.5, ss * 0.6, 0, 0, Math.PI * 2);
-          ctx.fill();
+        // Draw ER (endoplasmic reticulum) - bottom layer
+        ctx.globalAlpha = 0.5;
+        this.erPoints.forEach(er => {
+          const erAngle = er.angle + t * 0.1 * er.dist;
+          const erDist = er.dist * ss;
+          const erX = sx + Math.cos(erAngle) * erDist;
+          const erY = sy + Math.sin(erAngle) * erDist * 0.8;
+          const erSize = er.size * ss * 0.3;
           
-          // Flagella
-          ctx.strokeStyle = this.color;
-          ctx.lineWidth = 1;
-          ctx.globalAlpha = 0.3;
+          ctx.fillStyle = CHANNELS.er.color;
+          ctx.shadowColor = CHANNELS.er.color;
+          ctx.shadowBlur = 8;
           ctx.beginPath();
-          ctx.moveTo(-ss * 1.5, 0);
-          ctx.quadraticCurveTo(-ss * 3, -ss, -ss * 4, 0);
-          ctx.stroke();
-        } else if (this.type === 'mammalian') {
-          // Round cell with nucleus
-          ctx.translate(sx, sy);
-          ctx.fillStyle = this.color;
-          ctx.shadowColor = this.color;
-          ctx.shadowBlur = 25;
-          ctx.beginPath();
-          ctx.arc(0, 0, ss, 0, Math.PI * 2);
+          ctx.arc(erX, erY, erSize, 0, Math.PI * 2);
           ctx.fill();
+        });
+        
+        // Draw mitochondria
+        ctx.globalAlpha = 0.7;
+        this.mitochondria.forEach(mito => {
+          const mitoAngle = mito.angle + t * 0.15 * mito.speed;
+          const mitoDist = mito.dist * ss;
+          const mitoX = sx + Math.cos(mitoAngle) * mitoDist;
+          const mitoY = sy + Math.sin(mitoAngle) * mitoDist * 0.8;
+          const mitoSize = mito.size * ss * 0.25;
           
-          // Nucleus
-          ctx.fillStyle = 'rgba(0,0,0,0.5)';
-          ctx.globalAlpha = 0.6;
+          ctx.fillStyle = CHANNELS.mito.color;
+          ctx.shadowColor = CHANNELS.mito.color;
+          ctx.shadowBlur = 10;
           ctx.beginPath();
-          ctx.arc(0, 0, ss * 0.4, 0, Math.PI * 2);
+          ctx.ellipse(mitoX, mitoY, mitoSize * 1.5, mitoSize * 0.6, mitoAngle, 0, Math.PI * 2);
           ctx.fill();
-        } else if (this.type === 'dna') {
-          // Spiral DNA
-          ctx.translate(sx, sy);
-          ctx.strokeStyle = this.color;
-          ctx.lineWidth = 2;
-          ctx.shadowColor = this.color;
-          ctx.shadowBlur = 15;
+        });
+        
+        // Draw cell membrane/actin - middle layer
+        ctx.globalAlpha = 0.8;
+        ctx.strokeStyle = CHANNELS.actin.color;
+        ctx.fillStyle = CHANNELS.actin.color + '20';
+        ctx.shadowColor = CHANNELS.actin.color;
+        ctx.shadowBlur = 15;
+        ctx.lineWidth = 2 * zoom;
+        
+        ctx.beginPath();
+        this.membranePoints.forEach((pt, i) => {
+          const membraneT = t * pt.speed + this.phase;
+          const wobble = Math.sin(membraneT + pt.angle * 3) * 0.1;
+          const r = pt.radius + wobble;
+          const px = sx + Math.cos(pt.angle) * ss * r;
+          const py = sy + Math.sin(pt.angle) * ss * r * 0.85;
           
-          for (let i = 0; i < 3; i++) {
-            ctx.beginPath();
-            for (let j = 0; j < 20; j++) {
-              const angle = (j / 20) * Math.PI * 4 + t;
-              const r = ss * 0.3 * (1 - j / 40);
-              const px = Math.cos(angle + i * Math.PI / 3) * r;
-              const py = Math.sin(angle + i * Math.PI / 3) * r * 0.5;
-              if (j === 0) ctx.moveTo(px, py);
-              else ctx.lineTo(px, py);
-            }
-            ctx.stroke();
-          }
-        } else if (this.type === 'protein') {
-          // Crystal shape
-          ctx.translate(sx, sy);
-          ctx.fillStyle = this.color;
-          ctx.shadowColor = this.color;
-          ctx.shadowBlur = 20;
-          
-          ctx.beginPath();
-          for (let i = 0; i < 6; i++) {
-            const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-            const r = ss * (0.8 + Math.sin(t * 3 + i) * 0.2);
-            const px = Math.cos(angle) * r;
-            const py = Math.sin(angle) * r;
-            if (i === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
-          }
-          ctx.closePath();
-          ctx.fill();
-        } else if (this.type === 'vesicle') {
-          // Lipid bilayer sphere
-          ctx.translate(sx, sy);
-          ctx.strokeStyle = this.color;
-          ctx.lineWidth = 3;
-          ctx.shadowColor = this.color;
-          ctx.shadowBlur = 20;
-          ctx.globalAlpha = 0.5;
-          ctx.beginPath();
-          ctx.arc(0, 0, ss, 0, Math.PI * 2);
-          ctx.stroke();
-          
-          // Inner
-          ctx.globalAlpha = 0.2;
-          ctx.fillStyle = this.color;
-          ctx.beginPath();
-          ctx.arc(0, 0, ss * 0.6, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          // Default - circle
-          ctx.translate(sx, sy);
-          ctx.fillStyle = this.color;
-          ctx.shadowColor = this.color;
-          ctx.shadowBlur = 20;
-          ctx.beginPath();
-          ctx.arc(0, 0, ss, 0, Math.PI * 2);
-          ctx.fill();
-        }
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        });
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Draw nucleus - DNA channel (top layer)
+        const nucX = sx + this.nucOffsetX * ss;
+        const nucY = sy + this.nucOffsetY * ss;
+        const nucSize = ss * 0.35;
+        
+        // Nucleus glow
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = CHANNELS.dna.color;
+        ctx.shadowColor = CHANNELS.dna.color;
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        ctx.ellipse(nucX, nucY, nucSize, nucSize * 0.85, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Nucleolus (brighter spot)
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.shadowColor = CHANNELS.dna.color;
+        ctx.shadowBlur = 30;
+        ctx.beginPath();
+        ctx.arc(nucX - nucSize * 0.2, nucY - nucSize * 0.2, nucSize * 0.15, 0, Math.PI * 2);
+        ctx.fill();
         
         ctx.restore();
       }
@@ -569,7 +628,7 @@
         const sx = (this.x - panX) * zoom + width / 2;
         const sy = (this.y - panY) * zoom + height / 2;
         const dist = Math.hypot(px - sx, py - sy);
-        return dist < this.size * zoom * 2;
+        return dist < this.size * zoom * 1.5;
       }
     }
     
@@ -585,7 +644,7 @@
         this.size = Math.random() * 2 + 0.5;
         this.speedX = (Math.random() - 0.5) * 0.3;
         this.speedY = (Math.random() - 0.5) * 0.3;
-        this.color = ['#00f5ff', '#ff00ff', '#00ff88', '#ffee00', '#8844ff'][Math.floor(Math.random() * 5)];
+        this.color = ['#2E86AB', '#28A745', '#DC3545', '#FFC107'][Math.floor(Math.random() * 4)];
         this.alpha = Math.random() * 0.3 + 0.1;
       }
       
@@ -612,8 +671,8 @@
       return new Cell(
         (s.x - 0.5) * Math.min(width, height) * 0.8,
         (s.y - 0.5) * Math.min(width, height) * 0.8,
-        40 + Math.random() * 20,
-        s.color,
+        50 + Math.random() * 30,
+        s.channels,
         s.type
       );
     });
@@ -665,6 +724,42 @@
       ctx.stroke();
     }
     
+    // Scale bar - 10μm
+    function drawScaleBar() {
+      // Assuming cell size ~20μm, scale accordingly
+      const pixelsPerMicron = 3; // At zoom=1, ~3 pixels per micron
+      const scaleMicrons = 10;
+      const scalePixels = scaleMicrons * pixelsPerMicron * zoom;
+      
+      const barX = 50;
+      const barY = height - 50;
+      
+      ctx.save();
+      ctx.strokeStyle = '#ffffff';
+      ctx.fillStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.font = '12px JetBrains Mono, monospace';
+      ctx.textAlign = 'left';
+      
+      // Draw bar
+      ctx.beginPath();
+      ctx.moveTo(barX, barY);
+      ctx.lineTo(barX + scalePixels, barY);
+      ctx.stroke();
+      
+      // Draw endpoints
+      ctx.beginPath();
+      ctx.moveTo(barX, barY - 5);
+      ctx.lineTo(barX, barY + 5);
+      ctx.moveTo(barX + scalePixels, barY - 5);
+      ctx.lineTo(barX + scalePixels, barY + 5);
+      ctx.stroke();
+      
+      // Label
+      ctx.fillText(`${scaleMicrons}μm`, barX, barY - 10);
+      ctx.restore();
+    }
+    
     // Animation loop
     function animate() {
       time += 0.016;
@@ -681,6 +776,9 @@
       
       // Draw reticle
       drawReticle();
+      
+      // Draw scale bar
+      drawScaleBar();
       
       // Draw cells
       cells.forEach(cell => {
