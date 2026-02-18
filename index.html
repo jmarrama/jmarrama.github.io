@@ -471,6 +471,7 @@
       <div class="dropdown-content" id="dropdownMenu">
         <button class="dropdown-item active" data-page="microscope">◈ Microscope</button>
         <button class="dropdown-item" data-page="unicorn">🦄 Rainbow Unicorn Race</button>
+        <button class="dropdown-item" data-page="unicorn-game">🦄 Unicorn Game</button>
       </div>
     </div>
     <div class="zoom-indicator" id="zoomIndicator">zoom: <span id="zoomLevel">0.5</span>x</div>
@@ -1174,9 +1175,9 @@
         if (el) el.style.display = page === 'microscope' ? '' : 'none';
       });
       
-      // Toggle game elements
+      // Toggle game elements (both unicorn and unicorn-game show the game)
       gameElements.forEach(el => {
-        if (el) el.style.display = page === 'unicorn' ? '' : 'none';
+        if (el) el.style.display = (page === 'unicorn' || page === 'unicorn-game') ? '' : 'none';
       });
       
       // Update dropdown
@@ -1184,12 +1185,13 @@
         item.classList.toggle('active', item.dataset.page === page);
       });
       
-      document.getElementById('currentPage').textContent = page === 'microscope' ? 'Microscope' : 'Rainbow Unicorn Race';
+      const pageName = page === 'microscope' ? 'Microscope' : (page === 'unicorn' ? 'Rainbow Unicorn Race' : 'Unicorn Game');
+      document.getElementById('currentPage').textContent = pageName;
       document.getElementById('dropdownMenu').classList.remove('show');
       document.getElementById('zoomIndicator').style.display = page === 'microscope' ? '' : 'none';
       
       // Start/stop game
-      if (page === 'unicorn') {
+      if (page === 'unicorn' || page === 'unicorn-game') {
         initUnicornGame();
       } else {
         stopUnicornGame();
