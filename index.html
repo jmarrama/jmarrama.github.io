@@ -3,36 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Joe Marrama</title>
+  <title>Joe Marrama - Microscope</title>
+  <link rel="stylesheet" href="css/main.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;700&display=swap');
-    
-    :root {
-      --bg: #0a0a0f;
-      --cyan: #00f5ff;
-      --magenta: #ff00ff;
-      --green: #00ff88;
-      --yellow: #ffee00;
-      --purple: #8844ff;
-      --text: #e0e0e0;
-      --text-dim: #666680;
-    }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Outfit', sans-serif;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-    }
-    
     #microscope {
       position: fixed;
       top: 0;
@@ -41,440 +14,15 @@
       height: 100%;
       z-index: 1;
     }
-    
-    .ui-layer {
-      position: fixed;
-      z-index: 10;
-      pointer-events: none;
-    }
-    
-    .ui-layer > * {
-      pointer-events: auto;
-    }
-    
-    /* Header */
-    .header {
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 24px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: linear-gradient(to bottom, rgba(10,10,15,0.9) 0%, transparent 100%);
-    }
-    
-    .logo {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: var(--cyan);
-      text-transform: uppercase;
-      opacity: 0.8;
-      cursor: pointer;
-      position: relative;
-    }
-    
-    .logo:hover {
-      opacity: 1;
-    }
-    
-    /* Dropdown menu */
-    .dropdown {
-      position: relative;
-      display: inline-block;
-    }
-    
-    .dropdown-content {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      margin-top: 8px;
-      background: rgba(10,10,15,0.95);
-      border: 1px solid rgba(0,245,255,0.3);
-      border-radius: 8px;
-      min-width: 180px;
-      z-index: 1000;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-    }
-    
-    .dropdown-content.show {
-      display: block;
-    }
-    
-    .dropdown-item {
-      padding: 12px 16px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      color: var(--text);
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
-      background: none;
-      width: 100%;
-      text-align: left;
-    }
-    
-    .dropdown-item:hover {
-      background: rgba(0,245,255,0.1);
-      color: var(--cyan);
-    }
-    
-    .dropdown-item.active {
-      color: var(--cyan);
-      background: rgba(0,245,255,0.15);
-    }
-    
-    .dropdown-arrow {
-      margin-left: 8px;
-      font-size: 10px;
-    }
-    
-    .zoom-indicator {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      color: var(--text-dim);
-      background: rgba(0,0,0,0.5);
-      padding: 8px 16px;
-      border-radius: 20px;
-      border: 1px solid rgba(0,245,255,0.2);
-    }
-    
-    /* Sidebar */
-    .sidebar {
-      top: 50%;
-      right: 32px;
-      transform: translateY(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    
-    .nav-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.6);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-    }
-    
-    .nav-btn:hover {
-      border-color: var(--cyan);
-      box-shadow: 0 0 20px rgba(0,245,255,0.3);
-      transform: scale(1.1);
-    }
-    
-    .nav-btn svg {
-      width: 20px;
-      height: 20px;
-    }
-    
-    /* Bottom panel */
-    .bottom-panel {
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 24px 32px;
-      background: linear-gradient(to top, rgba(10,10,15,0.95) 0%, transparent 100%);
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-    }
-    
-    .title-section h1 {
-      font-size: 48px;
-      font-weight: 700;
-      letter-spacing: -1px;
-      background: linear-gradient(135deg, var(--cyan), var(--magenta));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-    
-    .title-section .subtitle {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      color: var(--text-dim);
-      letter-spacing: 1px;
-    }
-    
-    .sample-counter {
-      text-align: right;
-    }
-    
-    .sample-counter .label {
-      font-size: 11px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 4px;
-    }
-    
-    .sample-counter .count {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 24px;
-      color: var(--green);
-    }
-    
-    .sample-counter .count span {
-      color: var(--text-dim);
-      font-size: 14px;
-    }
-    
-    /* Floating info panel */
-    .info-panel {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(10,10,15,0.95);
-      border: 1px solid rgba(0,245,255,0.3);
-      border-radius: 16px;
-      padding: 32px;
-      max-width: 400px;
-      z-index: 100;
-      backdrop-filter: blur(20px);
-      display: none;
-    }
-    
-    .info-panel.visible {
-      display: block;
-      animation: popIn 0.3s ease;
-    }
-    
-    @keyframes popIn {
-      from {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.9);
-      }
-      to {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-      }
-    }
-    
-    .info-panel h3 {
-      font-size: 18px;
-      margin-bottom: 12px;
-      color: var(--cyan);
-    }
-    
-    .info-panel p {
-      font-size: 14px;
-      color: var(--text-dim);
-      line-height: 1.6;
-    }
-    
-    .info-panel .close {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      cursor: pointer;
-      font-size: 20px;
-    }
-    
-    /* Game UI */
-    .game-ui {
-      position: fixed;
-      top: 80px;
-      left: 32px;
-      z-index: 20;
-    }
-    
-    .game-stats {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    
-    .game-stats .score {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
-      color: #ff69b4;
-      text-shadow: 0 0 10px #ff69b4;
-    }
-    
-    .speed-control {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      color: var(--text-dim);
-    }
-    
-    .speed-control input[type="range"] {
-      width: 100px;
-      accent-color: #ff69b4;
-    }
-    
-    .game-btn {
-      background: linear-gradient(135deg, #ff69b4, #9945ff);
-      border: none;
-      border-radius: 8px;
-      padding: 12px 24px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      color: white;
-      cursor: pointer;
-      transition: all 0.3s;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    .game-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(255,105,180,0.5);
-    }
-    
-    .game-over {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(10,10,15,0.95);
-      border: 2px solid #ff69b4;
-      border-radius: 16px;
-      padding: 40px 60px;
-      text-align: center;
-      z-index: 100;
-      backdrop-filter: blur(20px);
-    }
-    
-    .game-over h2 {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 32px;
-      color: #ff69b4;
-      margin-bottom: 16px;
-      text-shadow: 0 0 20px #ff69b4;
-    }
-    
-    .game-over p {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
-      color: var(--text);
-    }
-    
-    .game-over p span {
-      color: #9945ff;
-      font-weight: bold;
-    }
-    
-    /* Instructions */
-    .instructions {
-      position: fixed;
-      bottom: 100px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      color: var(--text-dim);
-      text-align: center;
-      opacity: 0.6;
-      z-index: 5;
-      transition: opacity 0.5s;
-    }
-    
-    .instructions.hidden {
-      opacity: 0;
-    }
-    
-    /* Channel legend */
-    .channel-legend {
-      position: fixed;
-      bottom: 24px;
-      left: 32px;
-      display: flex;
-      gap: 16px;
-      z-index: 10;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-    }
-    
-    .channel-legend .channel {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      opacity: 0.7;
-    }
-    
-    .channel-legend .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-    
-    /* Collected samples drawer */
-    .samples-drawer {
-      position: fixed;
-      bottom: 100px;
-      left: 32px;
-      display: flex;
-      gap: 8px;
-      z-index: 5;
-    }
-    
-    .sample-orb {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 2px solid currentColor;
-      opacity: 0.3;
-      transition: all 0.3s ease;
-    }
-    
-    .sample-orb.collected {
-      opacity: 1;
-      background: currentColor;
-      box-shadow: 0 0 20px currentColor;
-    }
-    
-    /* DNA helix decoration */
-    .dna-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.1;
-    }
   </style>
 </head>
 <body>
   <canvas id="microscope"></canvas>
   
-  <canvas id="unicornGame" style="display:none"></canvas>
-  
   <div class="ui-layer header">
-    <div class="dropdown">
-      <div class="logo" id="logoBtn">
-        ◈ <span id="currentPage">Microscope</span><span class="dropdown-arrow">▼</span>
-      </div>
-      <div class="dropdown-content" id="dropdownMenu">
-        <button class="dropdown-item active" data-page="microscope">◈ Microscope</button>
-        <button class="dropdown-item" data-page="unicorn">🦄 Rainbow Unicorn Race</button>
-        <button class="dropdown-item" data-page="unicorn-game">🦄 Unicorn Game</button>
-      </div>
-    </div>
-    <div class="zoom-indicator" id="zoomIndicator">zoom: <span id="zoomLevel">0.5</span>x</div>
+    <a href="index.html" class="logo">◈ Microscope</a>
+    <a href="unicorn.html" class="nav-link">🦄 Unicorn Race</a>
+    <div class="zoom-indicator">zoom: <span id="zoomLevel">0.5</span>x</div>
   </div>
   
   <div class="ui-layer sidebar">
@@ -524,26 +72,9 @@
     <h3 id="infoTitle">Sample</h3>
     <p id="infoText">Description</p>
   </div>
-  
-  <!-- Unicorn Game UI -->
-  <div class="game-ui" id="gameUI" style="display:none">
-    <div class="game-stats">
-      <div class="score">Score: <span id="score">0</span></div>
-      <div class="speed-control">
-        <label>Speed: <span id="speedValue">5</span></label>
-        <input type="range" id="speedSlider" min="1" max="15" value="5">
-      </div>
-    </div>
-    <button class="game-btn" id="startBtn">Start Game</button>
-    <button class="game-btn" id="restartBtn" style="display:none">Play Again</button>
-  </div>
-  
-  <div class="game-over" id="gameOver" style="display:none">
-    <h2>Game Over!</h2>
-    <p>Final Score: <span id="finalScore">0</span></p>
-  </div>
 
   <script>
+    // Microscope only - no game code
     const canvas = document.getElementById('microscope');
     const ctx = canvas.getContext('2d');
     
@@ -557,71 +88,36 @@
     let time = 0;
     let hasInteracted = false;
     let collectedSamples = new Set();
+    let animationId = null;
     
-    // CellPaint-style channel colors (matching reference image)
+    // CellPaint-style channel colors
     const CHANNELS = {
-      dapi: { color: '#3d0066', name: 'DAPI (Nucleus)' },   // Dark purple nucleus
-      actin: { color: '#ff69b4', name: 'Actin (Phalloidin)' }, // Pink cytoskeleton
-      mito: { color: '#ff0000', name: 'Mitochondria' },       // Red dots
-      er: { color: '#FFA500', name: 'ER (Concanavalin)' }     // Orange - perinuclear
+      dapi: { color: '#3d0066', name: 'DAPI (Nucleus)' },
+      actin: { color: '#ff69b4', name: 'Actin (Phalloidin)' },
+      mito: { color: '#ff0000', name: 'Mitochondria' },
+      er: { color: '#FFA500', name: 'ER (Concanavalin)' }
     };
     
-    // Sample data - A549 lung epithelial cells with CellPaint channels
+    // Sample data
     const samples = [
-      {
-        id: 'a549-1',
-        name: 'A549 Cells',
-        channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Human alveolar type II epithelial cells from lung adenocarcinoma. The workhorse of respiratory research and drug discovery.',
-        x: 0.15,
-        y: 0.2,
-        type: 'a549'
-      },
-      {
-        id: 'a549-2',
-        name: 'A549 Cells',
-        channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Adherent epithelial cells with characteristic cobblestone morphology. Frequently used in COVID-19 and lung cancer studies.',
-        x: 0.8,
-        y: 0.25,
-        type: 'a549'
-      },
-      {
-        id: 'a549-3',
-        name: 'A549 Cells',
-        channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'These cells have large nuclei with prominent nucleoli - visible in the DAPI channel. The actin network gives the cell its shape.',
-        x: 0.35,
-        y: 0.7,
-        type: 'a549'
-      },
-      {
-        id: 'a549-4',
-        name: 'A549 Cells',
-        channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Mitochondria clustered around the nucleus - typical perinuclear distribution. ER network spans throughout the cytoplasm.',
-        x: 0.85,
-        y: 0.75,
-        type: 'a549'
-      },
-      {
-        id: 'a549-5',
-        name: 'A549 Cells',
-        channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Cell in mitosis - note the condensed chromosomes (bright blue DAPI signal) and disassembled actin network.',
-        x: 0.1,
-        y: 0.8,
-        type: 'a549'
-      },
-      {
-        id: 'a549-6',
-        name: 'A549 Cells',
-        channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Confluent monolayer region - cells showing contact inhibition. The bright actin edges show where cells touch.',
-        x: 0.6,
-        y: 0.15,
-        type: 'a549'
-      }
+      { id: 'a549-1', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
+        description: 'Human alveolar type II epithelial cells from lung adenocarcinoma.',
+        x: 0.15, y: 0.2, type: 'a549' },
+      { id: 'a549-2', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
+        description: 'Adherent epithelial cells with characteristic cobblestone morphology.',
+        x: 0.8, y: 0.25, type: 'a549' },
+      { id: 'a549-3', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
+        description: 'Large nuclei with prominent nucleoli - visible in the DAPI channel.',
+        x: 0.35, y: 0.7, type: 'a549' },
+      { id: 'a549-4', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
+        description: 'Mitochondria clustered around the nucleus - typical perinuclear distribution.',
+        x: 0.85, y: 0.75, type: 'a549' },
+      { id: 'a549-5', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
+        description: 'Cell in mitosis - condensed chromosomes and disassembled actin network.',
+        x: 0.1, y: 0.8, type: 'a549' },
+      { id: 'a549-6', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
+        description: 'Confluent monolayer region - cells showing contact inhibition.',
+        x: 0.6, y: 0.15, type: 'a549' }
     ];
     
     // Initialize drawer
@@ -643,12 +139,12 @@
     window.addEventListener('resize', resize);
     resize();
     
-    // A549 Cell class - realistic cell painting
+    // Cell class
     class Cell {
       constructor(x, y, size, channels, type, sampleId) {
         this.x = x;
-        this.y = y;
         this.baseX = x;
+        this.y = y;
         this.baseY = y;
         this.size = size;
         this.baseSize = size;
@@ -658,68 +154,45 @@
         this.phase = Math.random() * Math.PI * 2;
         this.visited = false;
         
-        // Generate organic cell membrane shape (like real cultured cells)
+        // Membrane shape
         this.membranePoints = [];
         const numPoints = 48;
         for (let i = 0; i < numPoints; i++) {
           const angle = (i / numPoints) * Math.PI * 2;
-          // More organic variance - some areas bulge, some indent
           const baseRadius = 0.85 + Math.sin(angle * 3 + this.phase) * 0.15;
           const variance = (Math.random() - 0.5) * 0.2;
-          this.membranePoints.push({
-            angle,
-            radius: baseRadius + variance
-          });
+          this.membranePoints.push({ angle, radius: baseRadius + variance });
         }
         
-        // Generate nucleus position (slightly off-center)
         this.nucOffsetX = (Math.random() - 0.5) * 0.15;
         this.nucOffsetY = (Math.random() - 0.5) * 0.15;
         
-        // DAPI dots inside nucleus (speckled pattern)
+        // DAPI dots
         this.dapiDots = [];
         for (let i = 0; i < 20; i++) {
           const angle = Math.random() * Math.PI * 2;
           const dist = Math.random() * 0.75;
-          this.dapiDots.push({
-            angle,
-            dist,
-            size: 0.04 + Math.random() * 0.06,
-            brightness: 0.4 + Math.random() * 0.6
-          });
+          this.dapiDots.push({ angle, dist, size: 0.04 + Math.random() * 0.06, brightness: 0.4 + Math.random() * 0.6 });
         }
         
-        // Generate mitochondria - INSIDE the cell boundary (cytoplasm)
+        // Mitochondria
         this.mitochondria = [];
         for (let i = 0; i < 18; i++) {
           const angle = Math.random() * Math.PI * 2;
-          // Mitochondria in cytoplasm, NOT in nucleus area (0.45 to 0.75 of cell radius)
           const dist = 0.45 + Math.random() * 0.3;
-          this.mitochondria.push({
-            angle,
-            dist,
-            size: 0.04 + Math.random() * 0.03
-          });
+          this.mitochondria.push({ angle, dist, size: 0.04 + Math.random() * 0.03 });
         }
         
-        // ER network - perinuclear (near nucleus, like in image)
+        // ER network
         this.erPoints = [];
         for (let i = 0; i < 15; i++) {
-          // ER is perinuclear - between nucleus and cell edge
           const angle = Math.random() * Math.PI * 2;
           const dist = 0.42 + Math.random() * 0.2;
-          this.erPoints.push({
-            angle,
-            dist,
-            size: 0.03 + Math.random() * 0.02
-          });
+          this.erPoints.push({ angle, dist, size: 0.03 + Math.random() * 0.02 });
         }
       }
       
-      // No movement - cells are static like in the image
-      update(t) {
-        // Static - no movement
-      }
+      update(t) { /* static */ }
       
       draw(t) {
         const sx = (this.x - panX) * zoom + width / 2;
@@ -730,7 +203,7 @@
         
         ctx.save();
         
-        // Pre-calculate cell boundary for clipping
+        // Cell boundary
         const cellPath = new Path2D();
         this.membranePoints.forEach((pt, i) => {
           const px = sx + Math.cos(pt.angle) * ss * pt.radius;
@@ -740,46 +213,40 @@
         });
         cellPath.closePath();
         
-        // Clip to cell boundary for internal structures
         ctx.save();
         ctx.clip(cellPath);
         
-        // Draw ER (perinuclear - near nucleus, green in image)
+        // ER
         ctx.globalAlpha = 0.5;
         this.erPoints.forEach(er => {
           const erDist = er.dist * ss;
           const erX = sx + Math.cos(er.angle) * erDist;
           const erY = sy + Math.sin(er.angle) * erDist * 0.9;
-          const erSize = er.size * ss;
-          
           ctx.fillStyle = CHANNELS.er.color;
           ctx.shadowColor = CHANNELS.er.color;
           ctx.shadowBlur = 8;
           ctx.beginPath();
-          ctx.arc(erX, erY, erSize, 0, Math.PI * 2);
+          ctx.arc(erX, erY, er.size * ss, 0, Math.PI * 2);
           ctx.fill();
         });
         
-        // Draw mitochondria - INSIDE cell boundary (red dots like in image)
+        // Mitochondria
         ctx.globalAlpha = 0.9;
         this.mitochondria.forEach(mito => {
           const mitoDist = mito.dist * ss;
           const mitoX = sx + Math.cos(mito.angle) * mitoDist;
           const mitoY = sy + Math.sin(mito.angle) * mitoDist * 0.9;
-          const mitoSize = mito.size * ss;
-          
-          // Red dot with glow
           ctx.fillStyle = CHANNELS.mito.color;
           ctx.shadowColor = CHANNELS.mito.color;
           ctx.shadowBlur = 12;
           ctx.beginPath();
-          ctx.arc(mitoX, mitoY, mitoSize, 0, Math.PI * 2);
+          ctx.arc(mitoX, mitoY, mito.size * ss, 0, Math.PI * 2);
           ctx.fill();
         });
         
-        ctx.restore(); // Remove clip
+        ctx.restore();
         
-        // Draw cell membrane/actin (pink like in image)
+        // Cell membrane
         ctx.globalAlpha = 0.85;
         ctx.strokeStyle = CHANNELS.actin.color;
         ctx.fillStyle = CHANNELS.actin.color + '20';
@@ -798,12 +265,11 @@
         ctx.fill();
         ctx.stroke();
         
-        // Draw nucleus - DAPI (dark purple like in image)
+        // Nucleus
         const nucX = sx + this.nucOffsetX * ss;
         const nucY = sy + this.nucOffsetY * ss;
         const nucSize = ss * 0.35;
         
-        // Nucleus body
         ctx.globalAlpha = 0.9;
         ctx.fillStyle = CHANNELS.dapi.color;
         ctx.shadowColor = CHANNELS.dapi.color;
@@ -812,34 +278,28 @@
         ctx.ellipse(nucX, nucY, nucSize, nucSize * 0.9, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // DAPI dots inside nucleus
+        // DAPI dots
         ctx.globalAlpha = 0.7;
         this.dapiDots.forEach(dot => {
           const dotDist = dot.dist * nucSize;
           const dotX = nucX + Math.cos(dot.angle) * dotDist;
           const dotY = nucY + Math.sin(dot.angle) * dotDist * 0.9;
-          const dotSize = dot.size * nucSize;
-          
           ctx.fillStyle = `rgba(255, 255, 255, ${dot.brightness})`;
           ctx.shadowColor = CHANNELS.dapi.color;
           ctx.shadowBlur = 3;
           ctx.beginPath();
-          ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2);
+          ctx.arc(dotX, dotY, dot.size * nucSize, 0, Math.PI * 2);
           ctx.fill();
         });
         
-        // Nucleoli (bright spots)
+        // Nucleoli
         ctx.globalAlpha = 0.95;
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = '#ffffff';
         ctx.shadowBlur = 15;
-        
-        // Primary nucleolus
         ctx.beginPath();
         ctx.arc(nucX - nucSize * 0.12, nucY - nucSize * 0.08, nucSize * 0.15, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Secondary nucleolus
         ctx.globalAlpha = 0.7;
         ctx.beginPath();
         ctx.arc(nucX + nucSize * 0.18, nucY + nucSize * 0.12, nucSize * 0.1, 0, Math.PI * 2);
@@ -848,16 +308,18 @@
         ctx.restore();
       }
       
-      contains(px, py) {
+      checkClick(mx, my) {
         const sx = (this.x - panX) * zoom + width / 2;
         const sy = (this.y - panY) * zoom + height / 2;
-        const dist = Math.hypot(px - sx, py - sy);
-        // Larger click radius (50px min) to make cells clickable at low zoom
-        return dist < Math.max(50, this.size * zoom * 3);
+        const ss = this.size * zoom;
+        
+        const dx = mx - sx;
+        const dy = my - sy;
+        return Math.sqrt(dx*dx + dy*dy) < ss;
       }
     }
     
-    // Background particles
+    // Particle class
     class Particle {
       constructor() {
         this.reset();
@@ -869,8 +331,8 @@
         this.size = Math.random() * 2 + 0.5;
         this.speedX = (Math.random() - 0.5) * 0.3;
         this.speedY = (Math.random() - 0.5) * 0.3;
-        this.color = ['#2E86AB', '#28A745', '#DC3545', '#FFC107'][Math.floor(Math.random() * 4)];
-        this.alpha = Math.random() * 0.3 + 0.1;
+        this.alpha = Math.random() * 0.5 + 0.1;
+        this.color = ['#00f5ff', '#ff00ff', '#00ff88', '#8844ff'][Math.floor(Math.random() * 4)];
       }
       
       update() {
@@ -883,111 +345,58 @@
       }
       
       draw() {
-        ctx.fillStyle = this.color;
         ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
       }
     }
     
-    // Create cells from samples
-    const cells = samples.map(s => {
-      return new Cell(
-        (s.x - 0.5) * Math.min(width, height) * 0.8,
-        (s.y - 0.5) * Math.min(width, height) * 0.8,
-        6 + Math.random() * 3,
-        s.channels,
-        s.type,
-        s.id
-      );
+    // Create cells and particles
+    const cells = samples.map(s => new Cell(s.x * 2 - 1, s.y * 2 - 1, 0.35, s.channels, s.type, s.id));
+    const particles = Array.from({ length: 50 }, () => new Particle());
+    
+    // Reticle
+    function drawReticle() {
+      ctx.strokeStyle = 'rgba(0, 245, 255, 0.3)';
+      ctx.lineWidth = 1;
+      
+      ctx.beginPath();
+      ctx.moveTo(width/2 - 20, height/2);
+      ctx.lineTo(width/2 + 20, height/2);
+      ctx.moveTo(width/2, height/2 - 20);
+      ctx.moveTo(width/2, height/2 + 20);
+      ctx.stroke();
+    }
+    
+    // Scale bar
+    function drawScaleBar() {
+      const scaleMicrons = 100 / zoom;
+      const barWidth = scaleMicrons * zoom * 50;
+      const barX = width - 32 - barWidth;
+      const barY = height - 32;
+      
+      ctx.restore();
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(barX, barY, barWidth, 2);
+      ctx.font = '10px JetBrains Mono';
+      ctx.fillText(`${scaleMicrons}μm`, barX, barY - 10);
+    }
+    
+    // Animation loop - only runs when page is visible
+    let isPageVisible = true;
+    document.addEventListener('visibilitychange', () => {
+      isPageVisible = !document.hidden;
     });
     
-    // Background particles
-    const particles = [];
-    for (let i = 0; i < 100; i++) {
-      particles.push(new Particle());
-    }
-    
-    // Grid lines (microscope reticle)
-    function drawReticle() {
-      ctx.strokeStyle = 'rgba(0,245,255,0.1)';
-      ctx.lineWidth = 1;
-      
-      const cx = width / 2;
-      const cy = height / 2;
-      const gridSize = 100 * zoom;
-      
-      // Vertical lines
-      for (let x = cx % gridSize; x < width; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-      
-      // Horizontal lines
-      for (let y = cy % gridSize; y < height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-      
-      // Crosshair
-      ctx.strokeStyle = 'rgba(0,245,255,0.3)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(cx - 50, cy);
-      ctx.lineTo(cx + 50, cy);
-      ctx.moveTo(cx, cy - 50);
-      ctx.lineTo(cx, cy + 50);
-      ctx.stroke();
-      
-      // Circle
-      ctx.beginPath();
-      ctx.arc(cx, cy, 100 * zoom, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    
-    // Scale bar - 10μm
-    function drawScaleBar() {
-      // Assuming cell size ~20μm, scale accordingly
-      const pixelsPerMicron = 3; // At zoom=1, ~3 pixels per micron
-      const scaleMicrons = 10;
-      const scalePixels = scaleMicrons * pixelsPerMicron * zoom;
-      
-      const barX = 50;
-      const barY = height - 50;
-      
-      ctx.save();
-      ctx.strokeStyle = '#ffffff';
-      ctx.fillStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.font = '12px JetBrains Mono, monospace';
-      ctx.textAlign = 'left';
-      
-      // Draw bar
-      ctx.beginPath();
-      ctx.moveTo(barX, barY);
-      ctx.lineTo(barX + scalePixels, barY);
-      ctx.stroke();
-      
-      // Draw endpoints
-      ctx.beginPath();
-      ctx.moveTo(barX, barY - 5);
-      ctx.lineTo(barX, barY + 5);
-      ctx.moveTo(barX + scalePixels, barY - 5);
-      ctx.lineTo(barX + scalePixels, barY + 5);
-      ctx.stroke();
-      
-      // Label
-      ctx.fillText(`${scaleMicrons}μm`, barX, barY - 10);
-      ctx.restore();
-    }
-    
-    // Animation loop
     function animate() {
+      if (!isPageVisible) {
+        animationId = requestAnimationFrame(animate);
+        return;
+      }
+      
       time += 0.016;
       
       // Clear
@@ -1003,30 +412,29 @@
       // Draw reticle
       drawReticle();
       
-      // Draw scale bar
-      drawScaleBar();
-      
       // Draw cells
       cells.forEach(cell => {
         cell.update(time);
         cell.draw(time);
       });
       
-      // Vignette effect
+      // Draw scale bar
+      drawScaleBar();
+      
+      // Vignette
       const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height) * 0.7);
       gradient.addColorStop(0, 'transparent');
       gradient.addColorStop(1, 'rgba(0,0,0,0.7)');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
       
-      requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
     }
     animate();
     
     // Interactions
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
-      // Smoother zoom - smaller factor per scroll tick
       const zoomFactor = e.deltaY > 0 ? 0.95 : 1.05;
       zoom = Math.max(0.1, Math.min(60, zoom * zoomFactor));
       document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
@@ -1035,7 +443,7 @@
         hasInteracted = true;
         document.getElementById('instructions').classList.add('hidden');
       }
-    });
+    }, { passive: false });
     
     canvas.addEventListener('mousedown', (e) => {
       isDragging = true;
@@ -1045,76 +453,53 @@
     
     canvas.addEventListener('mousemove', (e) => {
       if (isDragging) {
-        panX = panStart.x - (e.clientX - dragStart.x) / zoom;
-        panY = panStart.y - (e.clientY - dragStart.y) / zoom;
-        
-        if (!hasInteracted) {
-          hasInteracted = true;
-          document.getElementById('instructions').classList.add('hidden');
-        }
+        const dx = (e.clientX - dragStart.x) / zoom;
+        const dy = (e.clientY - dragStart.y) / zoom;
+        panX = panStart.x - dx;
+        panY = panStart.y - dy;
       }
     });
     
-    canvas.addEventListener('mouseup', () => {
-      isDragging = false;
-    });
+    canvas.addEventListener('mouseup', () => { isDragging = false; });
+    canvas.addEventListener('mouseleave', () => { isDragging = false; });
     
+    // Click to discover sample
     canvas.addEventListener('click', (e) => {
       if (isDragging) return;
       
-      cells.forEach(cell => {
-        if (cell.contains(e.clientX, e.clientY)) {
-          showInfo(cell);
+      const mx = e.clientX;
+      const my = e.clientY;
+      
+      for (const cell of cells) {
+        if (cell.checkClick(mx, my) && !collectedSamples.has(cell.sampleId)) {
+          collectedSamples.add(cell.sampleId);
+          
+          // Update orb
+          const orb = document.getElementById(`orb-${cell.sampleId}`);
+          if (orb) orb.classList.add('collected');
+          
+          // Update counter
+          document.getElementById('collectedCount').textContent = collectedSamples.size;
+          
+          // Show info panel
+          const sample = samples.find(s => s.id === cell.sampleId);
+          if (sample) {
+            document.getElementById('infoTitle').textContent = sample.name;
+            document.getElementById('infoText').textContent = sample.description;
+            document.getElementById('infoPanel').classList.add('visible');
+          }
         }
-      });
-    });
-    
-    // Touch support
-    let touchStart = null;
-    canvas.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1) {
-        touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        panStart = { x: panX, y: panY };
       }
     });
     
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      if (e.touches.length === 1 && touchStart) {
-        panX = panStart.x - (e.touches[0].clientX - touchStart.x) / zoom;
-        panY = panStart.y - (e.touches[0].clientY - touchStart.y) / zoom;
-        
-        if (!hasInteracted) {
-          hasInteracted = true;
-          document.getElementById('instructions').classList.add('hidden');
-        }
-      } else if (e.touches.length === 2) {
-        // Pinch zoom
-        const dist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        if (touchStart.dist) {
-          const zoomFactor = dist / touchStart.dist;
-          zoom = Math.max(0.1, Math.min(60, zoom * zoomFactor));
-          document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
-        }
-        touchStart.dist = dist;
-      }
-    });
-    
-    canvas.addEventListener('touchend', () => {
-      touchStart = null;
-    });
-    
-    // UI Buttons - smoother zoom
+    // Zoom buttons
     document.getElementById('zoomIn').addEventListener('click', () => {
-      zoom = Math.min(60, zoom * 1.15);
+      zoom = Math.min(60, zoom * 1.2);
       document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
     });
     
     document.getElementById('zoomOut').addEventListener('click', () => {
-      zoom = Math.max(0.1, zoom * 0.87);
+      zoom = Math.max(0.1, zoom / 1.2);
       document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
     });
     
@@ -1122,443 +507,18 @@
       zoom = 0.5;
       panX = 0;
       panY = 0;
-      document.getElementById('zoomLevel').textContent = '0.5';
+      document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
     });
     
-    // Info panel
-    function showInfo(cell) {
-      const sample = samples.find(s => s.id === cell.sampleId);
-      if (!sample) return;
-      
-      document.getElementById('infoTitle').textContent = sample.name;
-      document.getElementById('infoTitle').style.color = sample.color;
-      document.getElementById('infoText').textContent = sample.description;
-      document.getElementById('infoPanel').classList.add('visible');
-      
-      // Collect sample
-      if (!collectedSamples.has(sample.id)) {
-        collectedSamples.add(sample.id);
-        document.getElementById(`orb-${sample.id}`).classList.add('collected');
-        document.getElementById('collectedCount').textContent = collectedSamples.size;
-      }
-    }
-    
+    // Close info panel
     document.getElementById('closePanel').addEventListener('click', () => {
       document.getElementById('infoPanel').classList.remove('visible');
-    });
-    
-    document.getElementById('infoPanel').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('infoPanel')) {
-        document.getElementById('infoPanel').classList.remove('visible');
-      }
     });
     
     // Keyboard
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         document.getElementById('infoPanel').classList.remove('visible');
-      }
-    });
-    
-    // ============================================
-    // PAGE NAVIGATION SYSTEM
-    // ============================================
-    let currentPage = 'microscope';
-    const microscopeElements = document.querySelectorAll('#microscope, .sidebar, .bottom-panel, .samples-drawer, .instructions, .channel-legend, #zoomIndicator');
-    const gameElements = document.querySelectorAll('#unicornGame, #gameUI, #gameOver');
-    
-    function showPage(page) {
-      currentPage = page;
-      
-      // Toggle microscope elements
-      microscopeElements.forEach(el => {
-        if (el) el.style.display = page === 'microscope' ? '' : 'none';
-      });
-      
-      // Toggle game elements (both unicorn and unicorn-game show the game)
-      gameElements.forEach(el => {
-        if (el) el.style.display = (page === 'unicorn' || page === 'unicorn-game') ? '' : 'none';
-      });
-      
-      // Update dropdown
-      document.querySelectorAll('.dropdown-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.page === page);
-      });
-      
-      const pageName = page === 'microscope' ? 'Microscope' : (page === 'unicorn' ? 'Rainbow Unicorn Race' : 'Unicorn Game');
-      document.getElementById('currentPage').textContent = pageName;
-      document.getElementById('dropdownMenu').classList.remove('show');
-      document.getElementById('zoomIndicator').style.display = page === 'microscope' ? '' : 'none';
-      
-      // Start/stop game
-      if (page === 'unicorn' || page === 'unicorn-game') {
-        initUnicornGame();
-      } else {
-        stopUnicornGame();
-      }
-    }
-    
-    // Dropdown toggle
-    document.getElementById('logoBtn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      document.getElementById('dropdownMenu').classList.toggle('show');
-    });
-    
-    document.addEventListener('click', () => {
-      document.getElementById('dropdownMenu').classList.remove('show');
-    });
-    
-    // Page switching
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-      item.addEventListener('click', () => {
-        showPage(item.dataset.page);
-      });
-    });
-    
-    // ============================================
-    // UNICORN GAME
-    // ============================================
-    const gameCanvas = document.getElementById('unicornGame');
-    const gameCtx = gameCanvas.getContext('2d');
-    let gameRunning = false;
-    let gameSpeed = 5;
-    let score = 0;
-    let unicorn = { x: 100, y: 0, vy: 0, trail: [] };
-    let obstacles = [];
-    let stars = [];
-    let gameAnimationId = null;
-    
-    function initUnicornGame() {
-      gameCanvas.width = window.innerWidth;
-      gameCanvas.height = window.innerHeight;
-      
-      unicorn = { x: 100, y: gameCanvas.height / 2, vy: 0, trail: [] };
-      obstacles = [];
-      score = 0;
-      gameSpeed = parseInt(document.getElementById('speedSlider').value);
-      
-      // Generate background stars
-      stars = [];
-      for (let i = 0; i < 100; i++) {
-        stars.push({
-          x: Math.random() * gameCanvas.width,
-          y: Math.random() * gameCanvas.height,
-          size: Math.random() * 2 + 0.5,
-          speed: Math.random() * 0.5 + 0.2
-        });
-      }
-      
-      document.getElementById('score').textContent = '0';
-      document.getElementById('startBtn').style.display = 'inline-block';
-      document.getElementById('restartBtn').style.display = 'none';
-      document.getElementById('gameOver').style.display = 'none';
-      
-      // Start render loop (but not game logic)
-      renderGameBackground();
-    }
-    
-    function renderGameBackground() {
-      if (currentPage !== 'unicorn') return;
-      
-      gameCtx.fillStyle = '#0a0a1a';
-      gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-      
-      // Draw stars
-      stars.forEach(star => {
-        gameCtx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.random() * 0.7})`;
-        gameCtx.beginPath();
-        gameCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        gameCtx.fill();
-      });
-      
-      // Draw ground
-      gameCtx.fillStyle = '#1a1a2e';
-      gameCtx.fillRect(0, gameCanvas.height - 60, gameCanvas.width, 60);
-      
-      // Draw ground line
-      gameCtx.strokeStyle = '#9945ff';
-      gameCtx.lineWidth = 2;
-      gameCtx.shadowColor = '#9945ff';
-      gameCtx.shadowBlur = 10;
-      gameCtx.beginPath();
-      gameCtx.moveTo(0, gameCanvas.height - 60);
-      gameCtx.lineTo(gameCanvas.width, gameCanvas.height - 60);
-      gameCtx.stroke();
-      gameCtx.shadowBlur = 0;
-      
-      requestAnimationFrame(renderGameBackground);
-    }
-    
-    function startGame() {
-      gameRunning = true;
-      unicorn = { x: 100, y: gameCanvas.height / 2, vy: 0, trail: [] };
-      obstacles = [];
-      score = 0;
-      gameSpeed = parseInt(document.getElementById('speedSlider').value);
-      
-      document.getElementById('startBtn').style.display = 'none';
-      document.getElementById('restartBtn').style.display = 'none';
-      document.getElementById('gameOver').style.display = 'none';
-      
-      gameLoop();
-    }
-    
-    function gameLoop() {
-      if (!gameRunning || currentPage !== 'unicorn') return;
-      
-      // Clear
-      gameCtx.fillStyle = '#0a0a1a';
-      gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-      
-      // Update stars (parallax)
-      stars.forEach(star => {
-        star.x -= star.speed * (gameSpeed / 5);
-        if (star.x < 0) star.x = gameCanvas.width;
-        
-        gameCtx.fillStyle = `rgba(255, 255, 255, 0.5)`;
-        gameCtx.beginPath();
-        gameCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        gameCtx.fill();
-      });
-      
-      // Draw ground
-      gameCtx.fillStyle = '#1a1a2e';
-      gameCtx.fillRect(0, gameCanvas.height - 60, gameCanvas.width, 60);
-      gameCtx.strokeStyle = '#9945ff';
-      gameCtx.lineWidth = 2;
-      gameCtx.shadowColor = '#9945ff';
-      gameCtx.shadowBlur = 10;
-      gameCtx.beginPath();
-      gameCtx.moveTo(0, gameCanvas.height - 60);
-      gameCtx.lineTo(gameCanvas.width, gameCanvas.height - 60);
-      gameCtx.stroke();
-      gameCtx.shadowBlur = 0;
-      
-      // Update unicorn
-      unicorn.y += unicorn.vy;
-      unicorn.vy *= 0.95; // friction
-      
-      // Boundaries
-      if (unicorn.y < 40) unicorn.y = 40;
-      if (unicorn.y > gameCanvas.height - 80) unicorn.y = gameCanvas.height - 80;
-      
-      // Add to trail
-      unicorn.trail.push({ x: unicorn.x, y: unicorn.y, age: 0 });
-      if (unicorn.trail.length > 30) unicorn.trail.shift();
-      
-      // Update trail
-      unicorn.trail.forEach(t => t.age++);
-      
-      // Draw trail (rainbow!)
-      unicorn.trail.forEach((t, i) => {
-        const hue = (i / unicorn.trail.length) * 360;
-        gameCtx.fillStyle = `hsla(${hue}, 100%, 70%, ${1 - t.age / 30})`;
-        gameCtx.shadowColor = `hsla(${hue}, 100%, 50%, 0.8)`;
-        gameCtx.shadowBlur = 15;
-        gameCtx.beginPath();
-        gameCtx.arc(t.x - (30 - i) * 2, t.y, 6 - i * 0.15, 0, Math.PI * 2);
-        gameCtx.fill();
-      });
-      gameCtx.shadowBlur = 0;
-      
-      // Draw unicorn
-      drawUnicorn(unicorn.x, unicorn.y);
-      
-      // Spawn obstacles - distributed across the playable area
-      if (Math.random() < 0.02 + gameSpeed * 0.003) {
-        // Random position across the full vertical range (with padding)
-        const padding = 80;
-        const playableHeight = gameCanvas.height - padding * 2;
-        const y = padding + Math.random() * playableHeight;
-        
-        obstacles.push({
-          x: gameCanvas.width + 50,
-          y: y,
-          size: 30 + Math.random() * 20,
-          type: Math.floor(Math.random() * 3)
-        });
-      }
-      
-      // Update and draw obstacles
-      obstacles.forEach((obs, i) => {
-        obs.x -= gameSpeed * 2;
-        
-        // Draw obstacle (rainbow cloud/asteroid)
-        const hue = (obs.x / 10) % 360;
-        gameCtx.fillStyle = `hsla(${hue}, 80%, 60%, 0.8)`;
-        gameCtx.shadowColor = `hsla(${hue}, 100%, 50%, 0.8)`;
-        gameCtx.shadowBlur = 20;
-        gameCtx.beginPath();
-        
-        if (obs.type === 0) {
-          // Cloud shape
-          gameCtx.arc(obs.x, obs.y, obs.size, 0, Math.PI * 2);
-          gameCtx.arc(obs.x - obs.size * 0.6, obs.y + obs.size * 0.3, obs.size * 0.7, 0, Math.PI * 2);
-          gameCtx.arc(obs.x + obs.size * 0.6, obs.y + obs.size * 0.3, obs.size * 0.7, 0, Math.PI * 2);
-        } else if (obs.type === 1) {
-          // Star
-          for (let j = 0; j < 5; j++) {
-            const angle = (j / 5) * Math.PI * 2 - Math.PI / 2;
-            const r = j % 2 === 0 ? obs.size : obs.size * 0.5;
-            const px = obs.x + Math.cos(angle) * r;
-            const py = obs.y + Math.sin(angle) * r;
-            if (j === 0) gameCtx.moveTo(px, py);
-            else gameCtx.lineTo(px, py);
-          }
-          gameCtx.closePath();
-        } else {
-          // Diamond
-          gameCtx.moveTo(obs.x, obs.y - obs.size);
-          gameCtx.lineTo(obs.x + obs.size * 0.7, obs.y);
-          gameCtx.lineTo(obs.x, obs.y + obs.size);
-          gameCtx.lineTo(obs.x - obs.size * 0.7, obs.y);
-          gameCtx.closePath();
-        }
-        
-        gameCtx.fill();
-        gameCtx.shadowBlur = 0;
-        
-        // Collision detection
-        const dist = Math.hypot(unicorn.x - obs.x, unicorn.y - obs.y);
-        if (dist < obs.size + 20) {
-          gameOver();
-        }
-        
-        // Remove off-screen
-        if (obs.x < -100) {
-          obstacles.splice(i, 1);
-          score += 10;
-          document.getElementById('score').textContent = score;
-        }
-      });
-      
-      gameAnimationId = requestAnimationFrame(gameLoop);
-    }
-    
-    function drawUnicorn(x, y) {
-      gameCtx.save();
-      gameCtx.translate(x, y);
-      
-      // Rainbow gradient body
-      const gradient = gameCtx.createLinearGradient(-20, -15, 20, 15);
-      gradient.addColorStop(0, '#ff69b4');
-      gradient.addColorStop(0.5, '#9945ff');
-      gradient.addColorStop(1, '#00f5ff');
-      
-      // Body
-      gameCtx.fillStyle = gradient;
-      gameCtx.shadowColor = '#ff69b4';
-      gameCtx.shadowBlur = 20;
-      gameCtx.beginPath();
-      gameCtx.ellipse(0, 0, 25, 15, 0, 0, Math.PI * 2);
-      gameCtx.fill();
-      
-      // Head
-      gameCtx.beginPath();
-      gameCtx.ellipse(20, -5, 12, 10, 0.3, 0, Math.PI * 2);
-      gameCtx.fill();
-      
-      // Eye
-      gameCtx.fillStyle = '#fff';
-      gameCtx.shadowBlur = 5;
-      gameCtx.beginPath();
-      gameCtx.arc(24, -7, 4, 0, Math.PI * 2);
-      gameCtx.fill();
-      gameCtx.fillStyle = '#000';
-      gameCtx.beginPath();
-      gameCtx.arc(25, -7, 2, 0, Math.PI * 2);
-      gameCtx.fill();
-      
-      // Horn (rainbow!)
-      const hornGradient = gameCtx.createLinearGradient(28, -15, 40, -25);
-      hornGradient.addColorStop(0, '#ff0000');
-      hornGradient.addColorStop(0.5, '#ffff00');
-      hornGradient.addColorStop(1, '#00ff00');
-      gameCtx.fillStyle = hornGradient;
-      gameCtx.shadowColor = '#ffff00';
-      gameCtx.shadowBlur = 15;
-      gameCtx.beginPath();
-      gameCtx.moveTo(28, -10);
-      gameCtx.lineTo(45, -20);
-      gameCtx.lineTo(30, -5);
-      gameCtx.closePath();
-      gameCtx.fill();
-      
-      // Mane (flowing rainbow)
-      for (let i = 0; i < 5; i++) {
-        const hue = (i * 60 + Date.now() / 10) % 360;
-        gameCtx.fillStyle = `hsla(${hue}, 100%, 60%, 0.8)`;
-        gameCtx.shadowColor = `hsla(${hue}, 100%, 50%, 0.8)`;
-        gameCtx.beginPath();
-        gameCtx.ellipse(-15 + i * 3, -12 - i * 2, 8, 4, -0.5, 0, Math.PI * 2);
-        gameCtx.fill();
-      }
-      
-      // Legs
-      gameCtx.strokeStyle = gradient;
-      gameCtx.lineWidth = 4;
-      gameCtx.lineCap = 'round';
-      [-8, 8].forEach((lx, i) => {
-        gameCtx.beginPath();
-        gameCtx.moveTo(lx, 10);
-        gameCtx.lineTo(lx + (i === 0 ? -5 : 5), 25);
-        gameCtx.stroke();
-      });
-      
-      gameCtx.restore();
-    }
-    
-    function gameOver() {
-      gameRunning = false;
-      if (gameAnimationId) cancelAnimationFrame(gameAnimationId);
-      
-      document.getElementById('finalScore').textContent = score;
-      document.getElementById('gameOver').style.display = 'block';
-      document.getElementById('restartBtn').style.display = 'inline-block';
-    }
-    
-    function stopUnicornGame() {
-      gameRunning = false;
-      if (gameAnimationId) cancelAnimationFrame(gameAnimationId);
-    }
-    
-    // Game controls
-    document.getElementById('startBtn').addEventListener('click', startGame);
-    document.getElementById('restartBtn').addEventListener('click', startGame);
-    
-    document.getElementById('speedSlider').addEventListener('input', (e) => {
-      gameSpeed = parseInt(e.target.value);
-      document.getElementById('speedValue').textContent = gameSpeed;
-    });
-    
-    // Keyboard controls for unicorn
-    document.addEventListener('keydown', (e) => {
-      if (currentPage !== 'unicorn' || !gameRunning) return;
-      
-      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-        unicorn.vy = -8;
-      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-        unicorn.vy = 8;
-      }
-    });
-    
-    // Touch controls
-    gameCanvas.addEventListener('touchstart', (e) => {
-      if (currentPage !== 'unicorn' || !gameRunning) return;
-      e.preventDefault();
-      const touch = e.touches[0];
-      if (touch.clientY < gameCanvas.height / 2) {
-        unicorn.vy = -8;
-      } else {
-        unicorn.vy = 8;
-      }
-    });
-    
-    // Handle window resize for game
-    window.addEventListener('resize', () => {
-      if (currentPage === 'unicorn') {
-        gameCanvas.width = window.innerWidth;
-        gameCanvas.height = window.innerHeight;
       }
     });
   </script>

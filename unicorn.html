@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Joe Marrama - Unicorn Race</title>
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    body {
+      overflow: hidden;
+    }
+    
+    #gameCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    
+    /* Hide microscope-only elements */
+    .sidebar, .bottom-panel, .samples-drawer, .instructions, 
+    .channel-legend, #zoomIndicator, #microscope {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  
+  <div class="ui-layer header">
+    <a href="index.html" class="logo">◈ Microscope</a>
+    <a href="unicorn.html" class="nav-link active">🦄 Unicorn Race</a>
+  </div>
+  
+  <div class="game-ui" id="gameUI">
+    <div class="game-stats">
+      <div class="score">Score: <span id="score">0</span></div>
+      <div class="speed-control">
+        <label>Speed: <span id="speedValue">5</span></label>
+        <input type="range" id="speedSlider" min="1" max="15" value="5">
+      </div>
+    </div>
+    <button class="game-btn" id="startBtn">Start Game</button>
+    <button class="game-btn" id="restartBtn" style="display:none">Play Again</button>
+  </div>
+  
+  <div class="game-over" id="gameOver" style="display:none">
+    <h2>Game Over!</h2>
+    <p>Final Score: <span id="finalScore">0</span></p>
+  </div>
+
+  <script>
+    // Unicorn Race Game - standalone page
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let width, height;
+    let gameRunning = false;
+    let gameSpeed = 5;
+    let score = 0;
+    let unicorn = { x: 100, y: 0, vy: 0, trail: [] };
+    let obstacles = [];
+    let stars = [];
+    let animationId = null;
+    
+    // Resize handler
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    
+    // Generate static stars once
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 100; i++) {
+        stars.push({
+          x: Math.random() * width,
+          y: Math.random() * (height - 60),
+          size: Math.random() * 2 + 0.5,
+          speed: Math.random() * 0.5 + 0.2,
+          brightness: Math.random() * 0.5 + 0.5
+        });
+      }
+    }
+    initStars();
+    
+    // Visibility handling - stop animation when not visible
+    let isPageVisible = true;
+    document.addEventListener('visibilitychange', () => {
+      isPageVisible = !document.hidden;
+    });
+    
+    // Initialize game
+    function initGame() {
+      unicorn = { x: 100, y: height / 2, vy: 0, trail: [] };
+      obstacles = [];
+      score = 0;
+      gameSpeed = parseInt(document.getElementById('speedSlider').value);
+      
+      document.getElementById('score').textContent = '0';
+      document.getElementById('startBtn').style.display = 'inline-block';
+      document.getElementById('restartBtn').style.display = 'none';
+      document.getElementById('gameOver').style.display = 'none';
+      
+      // Re-init stars in case of resize
+      if (stars.length === 0 || stars[0].x > width) {
+        initStars();
+      }
+      
+      // Start render loop
+      renderBackground();
+    }
+    
+    // Background render (when not playing)
+    function renderBackground() {
+      if (gameRunning) return;
+      
+      ctx.fillStyle = '#0a0a1a';
+      ctx.fillRect(0, 0, width, height);
+      
+      // Draw stars
+      stars.forEach(star => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      
+      // Draw ground
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(0, height - 60, width, 60);
+      ctx.strokeStyle = '#9945ff';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#9945ff';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(0, height - 60);
+      ctx.lineTo(width, height - 60);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      
+      if (!gameRunning && isPageVisible) {
+        animationId = requestAnimationFrame(renderBackground);
+      }
+    }
+    
+    // Start game
+    function startGame() {
+      gameRunning = true;
+      unicorn = { x: 100, y: height / 2, vy: 0, trail: [] };
+      obstacles = [];
+      score = 0;
+      gameSpeed = parseInt(document.getElementById('speedSlider').value);
+      
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('restartBtn').style.display = 'none';
+      document.getElementById('gameOver').style.display = 'none';
+      
+      gameLoop();
+    }
+    
+    // Main game loop
+    function gameLoop() {
+      if (!gameRunning || !isPageVisible) {
+        if (isPageVisible) {
+          animationId = requestAnimationFrame(gameLoop);
+        }
+        return;
+      }
+      
+      // Clear
+      ctx.fillStyle = '#0a0a1a';
+      ctx.fillRect(0, 0, width, height);
+      
+      // Update and draw stars (parallax)
+      stars.forEach(star => {
+        star.x -= star.speed * (gameSpeed / 5);
+        if (star.x < 0) star.x = width;
+        
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness * 0.7})`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      
+      // Draw ground
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(0, height - 60, width, 60);
+      ctx.strokeStyle = '#9945ff';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#9945ff';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(0, height - 60);
+      ctx.lineTo(width, height - 60);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      
+      // Spawn obstacles
+      if (Math.random() < 0.02 * gameSpeed) {
+        obstacles.push({
+          x: width + 50,
+          y: Math.random() * (height - 120) + 30,
+          size: 30 + Math.random() * 20,
+          speed: 3 + Math.random() * 2
+        });
+      }
+      
+      // Update obstacles
+      obstacles.forEach((obs, i) => {
+        obs.x -= obs.speed * (gameSpeed / 5);
+        
+        // Draw obstacle
+        ctx.fillStyle = '#ff69b4';
+        ctx.shadowColor = '#ff69b4';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(obs.x, obs.y, obs.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Check collision
+        const dx = unicorn.x - obs.x;
+        const dy = unicorn.y - obs.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist < obs.size + 20) {
+          gameOver();
+        }
+        
+        // Remove off-screen
+        if (obs.x < -50) {
+          obstacles.splice(i, 1);
+          score += 10;
+          document.getElementById('score').textContent = score;
+        }
+      });
+      
+      // Update unicorn
+      unicorn.y += unicorn.vy;
+      unicorn.vy *= 0.95;
+      
+      // Bounds
+      if (unicorn.y < 40) unicorn.y = 40;
+      if (unicorn.y > height - 80) unicorn.y = height - 80;
+      
+      // Trail
+      unicorn.trail.push({ x: unicorn.x, y: unicorn.y, age: 0 });
+      if (unicorn.trail.length > 30) unicorn.trail.shift();
+      unicorn.trail.forEach(t => t.age++);
+      
+      // Draw trail
+      unicorn.trail.forEach((t, i) => {
+        const hue = (i / unicorn.trail.length) * 360;
+        ctx.fillStyle = `hsla(${hue}, 100%, 70%, ${0.5 - t.age * 0.015})`;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, 5 - t.age * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      
+      // Draw unicorn
+      ctx.save();
+      ctx.translate(unicorn.x, unicorn.y);
+      
+      // Body
+      ctx.fillStyle = '#ff69b4';
+      ctx.shadowColor = '#ff69b4';
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 25, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Horn
+      ctx.fillStyle = '#ffee00';
+      ctx.shadowColor = '#ffee00';
+      ctx.beginPath();
+      ctx.moveTo(15, -5);
+      ctx.lineTo(35, 0);
+      ctx.lineTo(15, 5);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Eye
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(10, -3, 3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.restore();
+      
+      // Score increases over time
+      score += 1;
+      document.getElementById('score').textContent = score;
+      
+      animationId = requestAnimationFrame(gameLoop);
+    }
+    
+    // Game over
+    function gameOver() {
+      gameRunning = false;
+      document.getElementById('finalScore').textContent = score;
+      document.getElementById('gameOver').style.display = 'block';
+      document.getElementById('restartBtn').style.display = 'inline-block';
+    }
+    
+    // Controls
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        unicorn.vy = -8;
+      } else if (e.code === 'ArrowDown') {
+        unicorn.vy = 8;
+      }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+        // Keep momentum but apply friction
+      }
+    });
+    
+    // Touch controls
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (touch.clientY < height / 2) {
+        unicorn.vy = -8;
+      } else {
+        unicorn.vy = 8;
+      }
+    }, { passive: false });
+    
+    // Speed slider
+    document.getElementById('speedSlider').addEventListener('input', (e) => {
+      gameSpeed = parseInt(e.target.value);
+      document.getElementById('speedValue').textContent = gameSpeed;
+    });
+    
+    // Start buttons
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('restartBtn').addEventListener('click', startGame);
+    
+    // Initialize
+    initGame();
+  </script>
+</body>
+</html>
