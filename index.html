@@ -473,7 +473,7 @@
         <button class="dropdown-item" data-page="unicorn">🦄 Rainbow Unicorn Race</button>
       </div>
     </div>
-    <div class="zoom-indicator" id="zoomIndicator">zoom: <span id="zoomLevel">0.2</span>x</div>
+    <div class="zoom-indicator" id="zoomIndicator">zoom: <span id="zoomLevel">1.0</span>x</div>
   </div>
   
   <div class="ui-layer sidebar">
@@ -548,7 +548,7 @@
     
     // State
     let width, height;
-    let zoom = 0.15;
+    let zoom = 1.0;
     let panX = 0, panY = 0;
     let isDragging = false;
     let dragStart = { x: 0, y: 0 };
@@ -1117,10 +1117,10 @@
     });
     
     document.getElementById('resetView').addEventListener('click', () => {
-      zoom = 0.15;
+      zoom = 1.0;
       panX = 0;
       panY = 0;
-      document.getElementById('zoomLevel').textContent = '0.2';
+      document.getElementById('zoomLevel').textContent = '1.0';
     });
     
     // Info panel
