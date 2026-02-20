@@ -68,6 +68,32 @@ body {
   opacity: 1;
 }
 
+/* Dropdown toggle button */
+.dropdown-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  color: var(--cyan);
+}
+
+.dropdown-toggle:hover {
+  opacity: 1;
+}
+
+.dropdown-arrow {
+  font-size: 8px;
+  opacity: 0.7;
+  transition: transform 0.2s;
+}
+
+.dropdown-toggle:hover .dropdown-arrow {
+  opacity: 1;
+}
+
 /* Nav link */
 .nav-link {
   font-family: 'JetBrains Mono', monospace;

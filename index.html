@@ -20,8 +20,16 @@
   <canvas id="microscope"></canvas>
   
   <div class="ui-layer header">
-    <a href="index.html" class="logo">◈ Microscope</a>
-    <a href="unicorn.html" class="nav-link">🦄 Unicorn Race</a>
+    <div class="dropdown">
+      <button class="dropdown-toggle" id="menuBtn">
+        <span class="logo">◈ Microscope</span>
+        <span class="dropdown-arrow">▼</span>
+      </button>
+      <div class="dropdown-content" id="menuDropdown">
+        <a href="index.html" class="dropdown-item active">🔬 Cell Microscope</a>
+        <a href="unicorn.html" class="dropdown-item">🦄 Unicorn Race</a>
+      </div>
+    </div>
     <div class="zoom-indicator">zoom: <span id="zoomLevel">0.5</span>x</div>
   </div>
   
@@ -74,6 +82,19 @@
   </div>
 
   <script>
+    // Dropdown menu toggle
+    const menuBtn = document.getElementById('menuBtn');
+    const menuDropdown = document.getElementById('menuDropdown');
+    
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuDropdown.classList.toggle('show');
+    });
+    
+    document.addEventListener('click', () => {
+      menuDropdown.classList.remove('show');
+    });
+    
     // Microscope only - no game code
     const canvas = document.getElementById('microscope');
     const ctx = canvas.getContext('2d');
