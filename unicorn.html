@@ -221,12 +221,12 @@
       ctx.stroke();
       ctx.shadowBlur = 0;
       
-      // Spawn obstacles
-      if (Math.random() < 0.02 * gameSpeed) {
+      // Spawn obstacles - much less frequent
+      if (Math.random() < 0.003 * gameSpeed) {
         obstacles.push({
           x: width + 50,
           y: Math.random() * (height - 120) + 30,
-          size: 30 + Math.random() * 20,
+          size: 25 + Math.random() * 15,
           speed: 3 + Math.random() * 2
         });
       }
@@ -268,46 +268,103 @@
       if (unicorn.y < 40) unicorn.y = 40;
       if (unicorn.y > height - 80) unicorn.y = height - 80;
       
-      // Trail
-      unicorn.trail.push({ x: unicorn.x, y: unicorn.y, age: 0 });
-      if (unicorn.trail.length > 30) unicorn.trail.shift();
+      // Rainbow tail - longer and more prominent
+      unicorn.trail.push({ x: unicorn.x - 20, y: unicorn.y, age: 0 });
+      if (unicorn.trail.length > 60) unicorn.trail.shift();
       unicorn.trail.forEach(t => t.age++);
       
-      // Draw trail
+      // Draw rainbow tail with flowing effect
       unicorn.trail.forEach((t, i) => {
-        const hue = (i / unicorn.trail.length) * 360;
-        ctx.fillStyle = `hsla(${hue}, 100%, 70%, ${0.5 - t.age * 0.015})`;
+        const progress = i / unicorn.trail.length;
+        const hue = progress * 360;
+        const alpha = progress * 0.8;
+        const size = 3 + progress * 8;
+        
+        // Tail strand
+        ctx.fillStyle = `hsla(${hue}, 100%, 60%, ${alpha})`;
         ctx.beginPath();
-        ctx.arc(t.x, t.y, 5 - t.age * 0.1, 0, Math.PI * 2);
+        ctx.arc(t.x, t.y, size, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Glow effect
+        ctx.shadowColor = `hsla(${hue}, 100%, 60%, 0.5)`;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, size * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
       });
       
       // Draw unicorn
       ctx.save();
       ctx.translate(unicorn.x, unicorn.y);
       
-      // Body
-      ctx.fillStyle = '#ff69b4';
-      ctx.shadowColor = '#ff69b4';
-      ctx.shadowBlur = 20;
+      // Body - white horse shape
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 15;
+      
+      // Body ellipse
       ctx.beginPath();
-      ctx.ellipse(0, 0, 25, 15, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 5, 30, 18, 0, 0, Math.PI * 2);
       ctx.fill();
       
-      // Horn
-      ctx.fillStyle = '#ffee00';
-      ctx.shadowColor = '#ffee00';
+      // Neck and head
       ctx.beginPath();
       ctx.moveTo(15, -5);
-      ctx.lineTo(35, 0);
-      ctx.lineTo(15, 5);
+      ctx.quadraticCurveTo(25, -20, 35, -15); // neck to head
+      ctx.quadraticCurveTo(40, -10, 35, -5); // snout
+      ctx.lineTo(20, 5);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Mane - flowing purple/pink
+      const maneColors = ['#ff69b4', '#9945ff', '#ff1493'];
+      for (let m = 0; m < 3; m++) {
+        ctx.fillStyle = maneColors[m];
+        ctx.shadowColor = maneColors[m];
+        ctx.beginPath();
+        ctx.moveTo(10, -10 + m * 3);
+        ctx.quadraticCurveTo(0, -25 + m * 5, -15, -20 + m * 8);
+        ctx.quadraticCurveTo(-5, -10 + m * 3, 5, -5 + m * 3);
+        ctx.closePath();
+        ctx.fill();
+      }
+      
+      // Legs
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowBlur = 0;
+      const legPositions = [[-15, 20], [-5, 22], [10, 20], [18, 22]];
+      legPositions.forEach((pos, i) => {
+        ctx.beginPath();
+        ctx.ellipse(pos[0], pos[1], 5, 12, i % 2 === 0 ? -0.2 : 0.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      
+      // Horn - golden rainbow
+      const hornGradient = ctx.createLinearGradient(20, -20, 45, 0);
+      hornGradient.addColorStop(0, '#ffee00');
+      hornGradient.addColorStop(0.5, '#ff69b4');
+      hornGradient.addColorStop(1, '#00ffff');
+      ctx.fillStyle = hornGradient;
+      ctx.shadowColor = '#ffee00';
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.moveTo(25, -12);
+      ctx.lineTo(50, -5);
+      ctx.lineTo(25, 0);
       ctx.closePath();
       ctx.fill();
       
       // Eye
+      ctx.fillStyle = '#000000';
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.arc(30, -10, 4, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(10, -3, 3, 0, Math.PI * 2);
+      ctx.arc(31, -11, 1.5, 0, Math.PI * 2);
       ctx.fill();
       
       ctx.restore();
