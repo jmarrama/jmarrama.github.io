@@ -18,7 +18,7 @@
 </head>
 <body>
   <canvas id="microscope"></canvas>
-  
+
   <div class="ui-layer header">
     <div class="dropdown">
       <button class="dropdown-toggle" id="menuBtn">
@@ -30,9 +30,9 @@
         <a href="unicorn.html" class="dropdown-item">🦄 Unicorn Race</a>
       </div>
     </div>
-    <div class="zoom-indicator">zoom: <span id="zoomLevel">0.5</span>x</div>
+    <div class="zoom-indicator">obj: <span id="zoomLevel">10</span>x</div>
   </div>
-  
+
   <div class="ui-layer sidebar">
     <button class="nav-btn" id="zoomIn" title="Zoom In">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -51,7 +51,7 @@
       </svg>
     </button>
   </div>
-  
+
   <div class="ui-layer bottom-panel">
     <div class="title-section">
       <h1>Joe Marrama</h1>
@@ -61,20 +61,20 @@
       <div class="count"><span id="collectedCount">0</span> <span>/ 6</span></div>
     </div>
   </div>
-  
+
   <div class="samples-drawer" id="samplesDrawer"></div>
-  
+
   <div class="instructions" id="instructions">
     scroll to zoom · drag to pan · click cells to discover samples
   </div>
-  
+
   <div class="channel-legend">
-    <div class="channel"><span class="dot" style="background:#2E86AB"></span>DAPI</div>
-    <div class="channel"><span class="dot" style="background:#28A745"></span>Actin</div>
-    <div class="channel"><span class="dot" style="background:#DC3545"></span>Mito</div>
-    <div class="channel"><span class="dot" style="background:#FFC107"></span>ER</div>
+    <div class="channel"><span class="dot" style="background:#5577ff"></span>DAPI</div>
+    <div class="channel"><span class="dot" style="background:#44ff77"></span>Actin</div>
+    <div class="channel"><span class="dot" style="background:#ff4422"></span>Mito</div>
+    <div class="channel"><span class="dot" style="background:#ffcc22"></span>ER</div>
   </div>
-  
+
   <div class="info-panel" id="infoPanel">
     <button class="close" id="closePanel">×</button>
     <h3 id="infoTitle">Sample</h3>
@@ -82,466 +82,772 @@
   </div>
 
   <script>
-    // Dropdown menu toggle
-    const menuBtn = document.getElementById('menuBtn');
-    const menuDropdown = document.getElementById('menuDropdown');
-    
-    menuBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      menuDropdown.classList.toggle('show');
-    });
-    
-    document.addEventListener('click', () => {
-      menuDropdown.classList.remove('show');
-    });
-    
-    // Microscope only - no game code
-    const canvas = document.getElementById('microscope');
-    const ctx = canvas.getContext('2d');
-    
-    // State
-    let width, height;
-    let zoom = 0.5;
-    let panX = 0, panY = 0;
-    let isDragging = false;
-    let dragStart = { x: 0, y: 0 };
-    let panStart = { x: 0, y: 0 };
-    let time = 0;
-    let hasInteracted = false;
-    let collectedSamples = new Set();
-    let animationId = null;
-    
-    // CellPaint-style channel colors
-    const CHANNELS = {
-      dapi: { color: '#3d0066', name: 'DAPI (Nucleus)' },
-      actin: { color: '#ff69b4', name: 'Actin (Phalloidin)' },
-      mito: { color: '#ff0000', name: 'Mitochondria' },
-      er: { color: '#FFA500', name: 'ER (Concanavalin)' }
+  // ============================================================
+  // A549 Cell Culture Microscope Visualization
+  //
+  // Physics:
+  //   Camera pixel size  = 6.5 µm  (sCMOS sensor)
+  //   A549 cell diameter = 20 µm   (radius 10 µm)
+  //   Objective mag      = viewZoom * PIXEL_SIZE_UM
+  //
+  // Coordinate system:
+  //   World space in micrometers (µm)
+  //   viewZoom = screen pixels per µm
+  //   Default viewZoom ≈ 1.54 → objective ≈ 10x
+  // ============================================================
+
+  // --- Dropdown ---
+  document.getElementById('menuBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    document.getElementById('menuDropdown').classList.toggle('show');
+  });
+  document.addEventListener('click', () =>
+    document.getElementById('menuDropdown').classList.remove('show')
+  );
+
+  // ============================================================
+  // Constants
+  // ============================================================
+  const PIXEL_SIZE_UM = 6.5;   // Camera pixel physical size (µm)
+  const CELL_R_UM     = 10;    // A549 cell radius (20µm diameter)
+  const NUC_R_UM      = 4.2;   // Nucleus radius (~8.4µm diameter)
+
+  // Offscreen pre-render canvas dimensions
+  // OC_CELL_R = 228 px; canvas center at 512 gives 284 px margin for glow + elongation
+  const OC_SIZE    = 1024;
+  const OC_CX      = OC_SIZE / 2;          // 512
+  const OC_CY      = OC_SIZE / 2;          // 512
+  const OC_CELL_R  = 228;                  // cell radius in offscreen space (px)
+  const OC_PX_UM   = OC_CELL_R / CELL_R_UM; // px per µm in offscreen canvas (22.8)
+
+  // ============================================================
+  // Main canvas + state
+  // ============================================================
+  const canvas = document.getElementById('microscope');
+  const ctx    = canvas.getContext('2d', { alpha: false });
+  let width, height;
+
+  // View
+  const DEFAULT_ZOOM = 10 / PIXEL_SIZE_UM; // ≈1.538 px/µm → 10x objective
+  let zoom       = DEFAULT_ZOOM;  // px/µm (current, animated)
+  let targetZoom = DEFAULT_ZOOM;  // px/µm (target)
+  const MIN_ZOOM     = 0.4;
+  const MAX_ZOOM     = 22;
+
+  let panX = 0, panY = 0;  // µm — camera center
+
+  // Interaction
+  let isDragging   = false;
+  let hasMoved     = false;
+  let lastMX = 0,  lastMY = 0;
+  let hasInteracted = false;
+
+  // Collected samples
+  let collectedSamples = new Set();
+
+  // Render scheduling
+  let renderPending = false;
+
+  // ============================================================
+  // Sample data — positions in µm from field center
+  // ============================================================
+  const samples = [
+    {
+      id: 'a549-1',
+      name: 'A549 — Lung Adenocarcinoma',
+      description: 'Human alveolar type II epithelial cells. The large nucleus with prominent dark nucleoli (DAPI-exclusion zones) is characteristic of transcriptionally active cancer cells.',
+      wx: -118, wy: -88
+    },
+    {
+      id: 'a549-2',
+      name: 'A549 — Cortical Actin',
+      description: 'A dense cortical actin ring (phalloidin, green) marks the cell perimeter. Stress fibers run the full length of the cell, terminating at focal adhesions at the substrate.',
+      wx: 128, wy: -78
+    },
+    {
+      id: 'a549-3',
+      name: 'A549 — Perinuclear Mitochondria',
+      description: 'MitoTracker labels metabolically active mitochondria distributed throughout the cytoplasm, with denser clustering near the nucleus reflecting high local ATP demand.',
+      wx: 18, wy: 108
+    },
+    {
+      id: 'a549-4',
+      name: 'A549 — Endoplasmic Reticulum',
+      description: 'The ER forms a reticular network radiating from the nuclear envelope. Rough ER (perinuclear) transitions to smooth ER tubules extending toward the cell periphery.',
+      wx: 168, wy: 58
+    },
+    {
+      id: 'a549-5',
+      name: 'A549 — Mitotic Cell',
+      description: 'A cell in mitosis. Chromosomes are condensed into a bright DAPI mass; the nuclear envelope has broken down, dispersing the ER, and the actin network reorganizes around the cleavage furrow.',
+      wx: -148, wy: 78
+    },
+    {
+      id: 'a549-6',
+      name: 'A549 — Contact-Inhibited Region',
+      description: 'Cells in contact exhibit reduced lamellipodia and highly aligned stress fibers — a hallmark of contact inhibition of locomotion.',
+      wx: -18, wy: -138
+    },
+  ];
+
+  // Background (non-interactive) cells for a realistic subconfluent monolayer
+  const bgSeeds = [
+    { wx:  68, wy: -158, seed: 200 },
+    { wx: -80, wy:  162, seed: 201 },
+    { wx: 208, wy: -125, seed: 202 },
+    { wx: -198, wy:   8, seed: 203 },
+    { wx:  98, wy:  178, seed: 204 },
+    { wx: -52, wy:   32, seed: 205 },
+    { wx: 218, wy:  148, seed: 206 },
+    { wx: -162, wy: -55, seed: 207 },
+  ];
+
+  // Initialize sample orbs in drawer
+  const drawer = document.getElementById('samplesDrawer');
+  samples.forEach(s => {
+    const orb = document.createElement('div');
+    orb.className    = 'sample-orb';
+    orb.style.color  = '#5577ff';   // DAPI blue
+    orb.id           = `orb-${s.id}`;
+    orb.title        = s.name;
+    drawer.appendChild(orb);
+  });
+
+  // ============================================================
+  // Seeded RNG (mulberry32) — ensures reproducible cell shapes
+  // ============================================================
+  function mkRng(seed) {
+    let s = seed >>> 0;
+    return () => {
+      s = (s + 0x6D2B79F5) | 0;
+      let t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
-    
-    // Sample data
-    const samples = [
-      { id: 'a549-1', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Human alveolar type II epithelial cells from lung adenocarcinoma.',
-        x: 0.15, y: 0.2, type: 'a549' },
-      { id: 'a549-2', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Adherent epithelial cells with characteristic cobblestone morphology.',
-        x: 0.8, y: 0.25, type: 'a549' },
-      { id: 'a549-3', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Large nuclei with prominent nucleoli - visible in the DAPI channel.',
-        x: 0.35, y: 0.7, type: 'a549' },
-      { id: 'a549-4', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Mitochondria clustered around the nucleus - typical perinuclear distribution.',
-        x: 0.85, y: 0.75, type: 'a549' },
-      { id: 'a549-5', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Cell in mitosis - condensed chromosomes and disassembled actin network.',
-        x: 0.1, y: 0.8, type: 'a549' },
-      { id: 'a549-6', name: 'A549 Cells', channels: ['dapi', 'actin', 'mito', 'er'],
-        description: 'Confluent monolayer region - cells showing contact inhibition.',
-        x: 0.6, y: 0.15, type: 'a549' }
-    ];
-    
-    // Initialize drawer
-    const drawer = document.getElementById('samplesDrawer');
-    samples.forEach((s, i) => {
-      const orb = document.createElement('div');
-      orb.className = 'sample-orb';
-      orb.style.color = CHANNELS[s.channels[0]].color;
-      orb.id = `orb-${s.id}`;
-      orb.title = s.name;
-      drawer.appendChild(orb);
+  }
+
+  // ============================================================
+  // Geometry helpers
+  // ============================================================
+
+  // Catmull-Rom smooth closed spline through an array of {x,y} points
+  function splinePath(pts) {
+    const n    = pts.length;
+    const path = new Path2D();
+    path.moveTo(pts[0].x, pts[0].y);
+    for (let i = 0; i < n; i++) {
+      const p0 = pts[(i + n - 1) % n];
+      const p1 = pts[i];
+      const p2 = pts[(i + 1) % n];
+      const p3 = pts[(i + 2) % n];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      path.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+    }
+    path.closePath();
+    return path;
+  }
+
+  // Generate an organic cell membrane outline
+  // Returns an array of {x,y} in offscreen canvas coordinates
+  function genMembrane(rng, cx, cy, baseR, nPts) {
+    nPts = nPts || 14;
+    const elongX    = 0.72 + rng() * 0.56;
+    const elongY    = 0.72 + rng() * 0.56;
+    const rot       = rng() * Math.PI * 2;
+    const numLam    = Math.floor(rng() * 3);           // 0–2 lamellipodia
+    const lam       = Array.from({ length: numLam }, () => ({
+      angle: rng() * Math.PI * 2,
+      width: 0.28 + rng() * 0.32,
+      height: 0.11 + rng() * 0.16,
+    }));
+
+    return Array.from({ length: nPts }, (_, i) => {
+      const baseAngle = (i / nPts) * Math.PI * 2;
+      const angle     = baseAngle + rot;
+      let r = baseR * (
+        1
+        + (rng() - 0.5) * 0.22
+        + Math.sin(2 * baseAngle + rng() * Math.PI) * 0.07
+        + Math.sin(3 * baseAngle + rng() * Math.PI) * 0.04
+      );
+      // Lamellipodia protrusions
+      for (const l of lam) {
+        const diff = Math.abs(((baseAngle - l.angle) + Math.PI) % (Math.PI * 2) - Math.PI);
+        if (diff < l.width) r += baseR * l.height * Math.cos((diff / l.width) * Math.PI / 2);
+      }
+      return {
+        x: cx + Math.cos(angle) * r * elongX,
+        y: cy + Math.sin(angle) * r * elongY,
+      };
     });
-    
-    // Resize
-    function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-    
-    // Cell class
-    class Cell {
-      constructor(x, y, size, channels, type, sampleId) {
-        this.x = x;
-        this.baseX = x;
-        this.y = y;
-        this.baseY = y;
-        this.size = size;
-        this.baseSize = size;
-        this.channels = channels;
-        this.type = type;
-        this.sampleId = sampleId;
-        this.phase = Math.random() * Math.PI * 2;
-        this.visited = false;
-        
-        // Membrane shape
-        this.membranePoints = [];
-        const numPoints = 48;
-        for (let i = 0; i < numPoints; i++) {
-          const angle = (i / numPoints) * Math.PI * 2;
-          const baseRadius = 0.85 + Math.sin(angle * 3 + this.phase) * 0.15;
-          const variance = (Math.random() - 0.5) * 0.2;
-          this.membranePoints.push({ angle, radius: baseRadius + variance });
-        }
-        
-        this.nucOffsetX = (Math.random() - 0.5) * 0.15;
-        this.nucOffsetY = (Math.random() - 0.5) * 0.15;
-        
-        // DAPI dots
-        this.dapiDots = [];
-        for (let i = 0; i < 20; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const dist = Math.random() * 0.75;
-          this.dapiDots.push({ angle, dist, size: 0.04 + Math.random() * 0.06, brightness: 0.4 + Math.random() * 0.6 });
-        }
-        
-        // Mitochondria
-        this.mitochondria = [];
-        for (let i = 0; i < 18; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const dist = 0.45 + Math.random() * 0.3;
-          this.mitochondria.push({ angle, dist, size: 0.04 + Math.random() * 0.03 });
-        }
-        
-        // ER network
-        this.erPoints = [];
-        for (let i = 0; i < 15; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const dist = 0.42 + Math.random() * 0.2;
-          this.erPoints.push({ angle, dist, size: 0.03 + Math.random() * 0.02 });
-        }
-      }
-      
-      update(t) { /* static */ }
-      
-      draw(t) {
-        const sx = (this.x - panX) * zoom + width / 2;
-        const sy = (this.y - panY) * zoom + height / 2;
-        const ss = this.size * zoom;
-        
-        if (sx < -ss * 2 || sx > width + ss * 2 || sy < -ss * 2 || sy > height + ss * 2) return;
-        
-        ctx.save();
-        
-        // Cell boundary
-        const cellPath = new Path2D();
-        this.membranePoints.forEach((pt, i) => {
-          const px = sx + Math.cos(pt.angle) * ss * pt.radius;
-          const py = sy + Math.sin(pt.angle) * ss * pt.radius * 0.9;
-          if (i === 0) cellPath.moveTo(px, py);
-          else cellPath.lineTo(px, py);
-        });
-        cellPath.closePath();
-        
-        ctx.save();
-        ctx.clip(cellPath);
-        
-        // ER
-        ctx.globalAlpha = 0.5;
-        this.erPoints.forEach(er => {
-          const erDist = er.dist * ss;
-          const erX = sx + Math.cos(er.angle) * erDist;
-          const erY = sy + Math.sin(er.angle) * erDist * 0.9;
-          ctx.fillStyle = CHANNELS.er.color;
-          ctx.shadowColor = CHANNELS.er.color;
-          ctx.shadowBlur = 8;
-          ctx.beginPath();
-          ctx.arc(erX, erY, er.size * ss, 0, Math.PI * 2);
-          ctx.fill();
-        });
-        
-        // Mitochondria
-        ctx.globalAlpha = 0.9;
-        this.mitochondria.forEach(mito => {
-          const mitoDist = mito.dist * ss;
-          const mitoX = sx + Math.cos(mito.angle) * mitoDist;
-          const mitoY = sy + Math.sin(mito.angle) * mitoDist * 0.9;
-          ctx.fillStyle = CHANNELS.mito.color;
-          ctx.shadowColor = CHANNELS.mito.color;
-          ctx.shadowBlur = 12;
-          ctx.beginPath();
-          ctx.arc(mitoX, mitoY, mito.size * ss, 0, Math.PI * 2);
-          ctx.fill();
-        });
-        
-        ctx.restore();
-        
-        // Cell membrane
-        ctx.globalAlpha = 0.85;
-        ctx.strokeStyle = CHANNELS.actin.color;
-        ctx.fillStyle = CHANNELS.actin.color + '20';
-        ctx.shadowColor = CHANNELS.actin.color;
-        ctx.shadowBlur = 15;
-        ctx.lineWidth = 2 * zoom;
-        
-        ctx.beginPath();
-        this.membranePoints.forEach((pt, i) => {
-          const px = sx + Math.cos(pt.angle) * ss * pt.radius;
-          const py = sy + Math.sin(pt.angle) * ss * pt.radius * 0.9;
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        });
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        
-        // Nucleus
-        const nucX = sx + this.nucOffsetX * ss;
-        const nucY = sy + this.nucOffsetY * ss;
-        const nucSize = ss * 0.35;
-        
-        ctx.globalAlpha = 0.9;
-        ctx.fillStyle = CHANNELS.dapi.color;
-        ctx.shadowColor = CHANNELS.dapi.color;
-        ctx.shadowBlur = 20;
-        ctx.beginPath();
-        ctx.ellipse(nucX, nucY, nucSize, nucSize * 0.9, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // DAPI dots
-        ctx.globalAlpha = 0.7;
-        this.dapiDots.forEach(dot => {
-          const dotDist = dot.dist * nucSize;
-          const dotX = nucX + Math.cos(dot.angle) * dotDist;
-          const dotY = nucY + Math.sin(dot.angle) * dotDist * 0.9;
-          ctx.fillStyle = `rgba(255, 255, 255, ${dot.brightness})`;
-          ctx.shadowColor = CHANNELS.dapi.color;
-          ctx.shadowBlur = 3;
-          ctx.beginPath();
-          ctx.arc(dotX, dotY, dot.size * nucSize, 0, Math.PI * 2);
-          ctx.fill();
-        });
-        
-        // Nucleoli
-        ctx.globalAlpha = 0.95;
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = '#ffffff';
-        ctx.shadowBlur = 15;
-        ctx.beginPath();
-        ctx.arc(nucX - nucSize * 0.12, nucY - nucSize * 0.08, nucSize * 0.15, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 0.7;
-        ctx.beginPath();
-        ctx.arc(nucX + nucSize * 0.18, nucY + nucSize * 0.12, nucSize * 0.1, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
-      }
-      
-      checkClick(mx, my) {
-        const sx = (this.x - panX) * zoom + width / 2;
-        const sy = (this.y - panY) * zoom + height / 2;
-        const ss = this.size * zoom;
-        
-        const dx = mx - sx;
-        const dy = my - sy;
-        return Math.sqrt(dx*dx + dy*dy) < ss;
+  }
+
+  // Generate a slightly irregular nucleus outline
+  function genNucleus(rng, cx, cy, baseR, nPts) {
+    nPts = nPts || 10;
+    const elongX = 0.80 + rng() * 0.40;
+    const elongY = 0.80 + rng() * 0.40;
+    const rot    = rng() * Math.PI * 2;
+    return Array.from({ length: nPts }, (_, i) => {
+      const angle = (i / nPts) * Math.PI * 2 + rot;
+      const r     = baseR * (1 + (rng() - 0.5) * 0.10);
+      return {
+        x: cx + Math.cos(angle) * r * elongX,
+        y: cy + Math.sin(angle) * r * elongY,
+      };
+    });
+  }
+
+  // ============================================================
+  // Cell pre-renderer
+  // Draws one cell to a 512×512 OffscreenCanvas with transparent BG.
+  // shadowBlur is used here (one-time cost) so the main loop is cheap.
+  // ============================================================
+  function preRenderCell(seed, isMitotic) {
+    const oc  = new OffscreenCanvas(OC_SIZE, OC_SIZE);
+    const g   = oc.getContext('2d');
+    const rng = mkRng(seed);
+
+    // --- Geometry ---
+    const membPts  = genMembrane(rng, OC_CX, OC_CY, OC_CELL_R);
+    const membPath = splinePath(membPts);
+
+    const nucOffX  = (rng() - 0.5) * OC_CELL_R * 0.22;
+    const nucOffY  = (rng() - 0.5) * OC_CELL_R * 0.22;
+    const nucCX    = OC_CX + nucOffX;
+    const nucCY    = OC_CY + nucOffY;
+    const nucR     = NUC_R_UM * OC_PX_UM;
+    const nucPts   = genNucleus(rng, nucCX, nucCY, nucR);
+    const nucPath  = splinePath(nucPts);
+
+    // ============================================================
+    // LAYER 1 — ER (yellow-orange) — reticular network
+    // Phalloidin for ER is actually ER-Tracker / concanavalin A
+    // Concentrated perinuclear (rough ER), tubules extending outward
+    // ============================================================
+    g.save();
+    g.clip(membPath);
+
+    // Perinuclear ER sheet (diffuse glow around nucleus)
+    const erGrad = g.createRadialGradient(
+      nucCX, nucCY, nucR * 0.85,
+      nucCX, nucCY, nucR * 3.0
+    );
+    erGrad.addColorStop(0,   'rgba(210, 155,  8, 0.32)');
+    erGrad.addColorStop(0.4, 'rgba(175, 125,  3, 0.11)');
+    erGrad.addColorStop(1,   'rgba(130,  90,  0, 0.02)');
+    g.fillStyle = erGrad;
+    g.fillRect(0, 0, OC_SIZE, OC_SIZE);
+
+    // ER tubule dots + short connecting segments
+    const nER = 65;
+    for (let i = 0; i < nER; i++) {
+      const t      = Math.pow(rng(), 0.55);
+      const angle  = rng() * Math.PI * 2;
+      const dist   = nucR * 0.92 + t * OC_CELL_R * 0.72;
+      const ex     = nucCX + Math.cos(angle) * dist;
+      const ey     = nucCY + Math.sin(angle) * dist;
+      const dotR   = 1.8 + rng() * 3.5;
+      const bright = 0.42 + rng() * 0.58;
+
+      g.globalAlpha = bright * 0.68;
+      g.shadowColor = '#ffcc20';
+      g.shadowBlur  = 10;
+      g.fillStyle   = '#ffd545';
+      g.beginPath();
+      g.arc(ex, ey, dotR, 0, Math.PI * 2);
+      g.fill();
+
+      // Connecting tubule segment
+      if (rng() < 0.48) {
+        const tLen   = 9 + rng() * 24;
+        const tAngle = rng() * Math.PI * 2;
+        g.strokeStyle = `rgba(245,195,25,${bright * 0.42})`;
+        g.lineWidth   = 1.2;
+        g.shadowBlur  = 5;
+        g.beginPath();
+        g.moveTo(ex, ey);
+        g.lineTo(ex + Math.cos(tAngle) * tLen, ey + Math.sin(tAngle) * tLen);
+        g.stroke();
       }
     }
-    
-    // Particle class
-    class Particle {
-      constructor() {
-        this.reset();
-      }
-      
-      reset() {
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
-        this.size = Math.random() * 2 + 0.5;
-        this.speedX = (Math.random() - 0.5) * 0.3;
-        this.speedY = (Math.random() - 0.5) * 0.3;
-        this.alpha = Math.random() * 0.5 + 0.1;
-        this.color = ['#00f5ff', '#ff00ff', '#00ff88', '#8844ff'][Math.floor(Math.random() * 4)];
-      }
-      
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        
-        if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
-          this.reset();
-        }
-      }
-      
-      draw() {
-        ctx.globalAlpha = this.alpha;
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    g.shadowBlur = 0;
+    g.globalAlpha = 1;
+
+    // ============================================================
+    // LAYER 2 — MitoTracker (red-orange) — elongated tubular mito
+    // Distributed throughout cytoplasm, slightly more perinuclear,
+    // avoids the nucleus.
+    // ============================================================
+    const nMito = 52;
+    for (let i = 0; i < nMito; i++) {
+      const t      = Math.pow(rng(), 0.52);
+      const angle  = rng() * Math.PI * 2;
+      const dist   = nucR * 1.08 + t * OC_CELL_R * 0.63;
+      const mx     = nucCX + Math.cos(angle) * dist;
+      const my     = nucCY + Math.sin(angle) * dist;
+      const mLen   = 5 + rng() * 20;  // elongated (0.5–1.1µm at OC scale)
+      const mW     = 2.5 + rng() * 2.2;
+      const mAngle = rng() * Math.PI;
+      const bright = 0.48 + rng() * 0.52;
+
+      g.save();
+      g.translate(mx, my);
+      g.rotate(mAngle);
+      g.shadowColor = '#ff3015';
+      g.shadowBlur  = 12;
+      g.globalAlpha = bright * 0.90;
+      g.fillStyle   = '#ff4525';
+      g.beginPath();
+      g.ellipse(0, 0, mLen / 2, mW / 2, 0, 0, Math.PI * 2);
+      g.fill();
+      g.restore();
     }
-    
-    // Create cells and particles
-    const cells = samples.map(s => new Cell(s.x * 2 - 1, s.y * 2 - 1, 0.35, s.channels, s.type, s.id));
-    const particles = Array.from({ length: 50 }, () => new Particle());
-    
-    // Reticle
-    function drawReticle() {
-      ctx.strokeStyle = 'rgba(0, 245, 255, 0.3)';
-      ctx.lineWidth = 1;
-      
-      ctx.beginPath();
-      ctx.moveTo(width/2 - 20, height/2);
-      ctx.lineTo(width/2 + 20, height/2);
-      ctx.moveTo(width/2, height/2 - 20);
-      ctx.moveTo(width/2, height/2 + 20);
-      ctx.stroke();
+    g.shadowBlur = 0;
+    g.globalAlpha = 1;
+
+    g.restore(); // end cell clip
+
+    // ============================================================
+    // LAYER 3 — Actin / Phalloidin (green)
+    // Strong cortical actin ring at cell perimeter.
+    // Internal stress fibers (traverse the cell body).
+    // Very faint diffuse cytoplasmic signal.
+    // ============================================================
+    g.save();
+
+    // Diffuse cytoplasmic actin (very dim)
+    g.globalAlpha = 0.038;
+    g.fillStyle   = '#33ee55';
+    g.fill(membPath);
+    g.globalAlpha = 1;
+
+    // Stress fibers: straight lines spanning the cell, slightly random offset
+    const nFibers = 2 + Math.floor(rng() * 3);
+    for (let i = 0; i < nFibers; i++) {
+      const fAngle  = rng() * Math.PI;
+      const fOff    = (rng() - 0.5) * OC_CELL_R * 0.52;
+      const perpX   = Math.cos(fAngle + Math.PI / 2) * fOff;
+      const perpY   = Math.sin(fAngle + Math.PI / 2) * fOff;
+      const fLen    = OC_CELL_R * (0.72 + rng() * 0.38);
+      const bright  = 0.28 + rng() * 0.38;
+
+      const x1 = OC_CX + perpX - Math.cos(fAngle) * fLen;
+      const y1 = OC_CY + perpY - Math.sin(fAngle) * fLen;
+      const x2 = OC_CX + perpX + Math.cos(fAngle) * fLen;
+      const y2 = OC_CY + perpY + Math.sin(fAngle) * fLen;
+
+      g.save();
+      g.clip(membPath);
+      g.globalAlpha = bright;
+      g.shadowColor = '#44ee66';
+      g.shadowBlur  = 5;
+      g.strokeStyle = '#55ff77';
+      g.lineWidth   = 1.4 + rng() * 1.8;
+      g.lineCap     = 'round';
+      g.beginPath();
+      g.moveTo(x1, y1);
+      g.lineTo(x2, y2);
+      g.stroke();
+      g.restore();
     }
-    
+
+    // Cortical actin ring — thick glowing stroke at cell boundary
+    g.shadowColor = '#22ff55';
+    g.shadowBlur  = 22;
+    g.globalAlpha = 0.90;
+    g.strokeStyle = '#55ff88';
+    g.lineWidth   = 5.5;
+    g.stroke(membPath);
+
+    // Inner bright rim
+    g.shadowBlur  = 7;
+    g.globalAlpha = 0.48;
+    g.strokeStyle = '#aaffcc';
+    g.lineWidth   = 1.5;
+    g.stroke(membPath);
+
+    g.shadowBlur  = 0;
+    g.globalAlpha = 1;
+    g.restore();
+
+    // ============================================================
+    // LAYER 4 — DAPI (blue) — nucleus
+    // ============================================================
+    if (isMitotic) {
+      // Mitotic cell: condensed chromosomes as discrete bright masses
+      const nChrom = 4 + Math.floor(rng() * 5);
+      for (let i = 0; i < nChrom; i++) {
+        const cx2 = OC_CX + (rng() - 0.5) * nucR * 1.0;
+        const cy2 = OC_CY + (rng() - 0.5) * nucR * 0.65;
+        const cr  = nucR * (0.13 + rng() * 0.26);
+        g.shadowColor = '#5577ff';
+        g.shadowBlur  = 20;
+        g.globalAlpha = 0.68 + rng() * 0.32;
+        g.fillStyle   = '#6688ff';
+        g.beginPath();
+        g.ellipse(cx2, cy2, cr * (1.0 + rng() * 0.6), cr * (0.4 + rng() * 0.5),
+                  rng() * Math.PI, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.shadowBlur  = 0;
+      g.globalAlpha = 1;
+    } else {
+      // Interphase nucleus
+
+      // Nucleoplasm base (inside nucleus clip)
+      g.save();
+      g.clip(nucPath);
+
+      const dapiGrad = g.createRadialGradient(nucCX, nucCY, 0, nucCX, nucCY, nucR * 1.05);
+      dapiGrad.addColorStop(0,    'rgba(58,  90, 215, 0.72)');
+      dapiGrad.addColorStop(0.55, 'rgba(44,  72, 195, 0.64)');
+      dapiGrad.addColorStop(1,    'rgba(28,  52, 168, 0.56)');
+      g.fillStyle = dapiGrad;
+      g.fillRect(0, 0, OC_SIZE, OC_SIZE);
+
+      // Peripheral heterochromatin — bright spots concentrated at nuclear rim
+      // (DAPI preferentially stains AT-rich condensed chromatin)
+      const nHetPeri = 8 + Math.floor(rng() * 8);
+      for (let i = 0; i < nHetPeri; i++) {
+        const t     = 0.58 + rng() * 0.40;
+        const angle = rng() * Math.PI * 2;
+        const hx    = nucCX + Math.cos(angle) * nucR * t;
+        const hy    = nucCY + Math.sin(angle) * nucR * t;
+        const hr    = 4 + rng() * 12;
+        g.shadowColor = '#6688ff';
+        g.shadowBlur  = 7;
+        g.globalAlpha = 0.42 + rng() * 0.48;
+        g.fillStyle   = '#7799ff';
+        g.beginPath();
+        g.arc(hx, hy, hr, 0, Math.PI * 2);
+        g.fill();
+      }
+
+      // Central euchromatic heterochromatin patches (dimmer)
+      const nHetCent = 3 + Math.floor(rng() * 4);
+      for (let i = 0; i < nHetCent; i++) {
+        const t     = rng() * 0.50;
+        const angle = rng() * Math.PI * 2;
+        const hx    = nucCX + Math.cos(angle) * nucR * t;
+        const hy    = nucCY + Math.sin(angle) * nucR * t;
+        const hr    = 3 + rng() * 8;
+        g.shadowBlur  = 4;
+        g.globalAlpha = 0.24 + rng() * 0.28;
+        g.fillStyle   = '#8899ff';
+        g.beginPath();
+        g.arc(hx, hy, hr, 0, Math.PI * 2);
+        g.fill();
+      }
+
+      g.shadowBlur  = 0;
+      g.globalAlpha = 1;
+      g.restore(); // end nucleus clip
+
+      // Nucleoli — dark DAPI-exclusion zones (rRNA-rich, no AT-DNA)
+      // Appear as dark "holes" inside the bright nucleus
+      const nNucleoli = 1 + Math.floor(rng() * 2);
+      for (let i = 0; i < nNucleoli; i++) {
+        const t   = 0.08 + rng() * 0.44;
+        const ang = rng() * Math.PI * 2;
+        const nx  = nucCX + Math.cos(ang) * nucR * t;
+        const ny  = nucCY + Math.sin(ang) * nucR * t;
+        const nr2 = OC_PX_UM * (0.85 + rng() * 0.95);  // 0.85–1.8µm radius
+
+        // Dark exclusion zone
+        g.globalAlpha = 0.92;
+        g.fillStyle   = '#01020f';
+        g.beginPath();
+        g.arc(nx, ny, nr2, 0, Math.PI * 2);
+        g.fill();
+
+        // Slight condensed-chromatin rim around nucleolus
+        g.globalAlpha = 0.42;
+        g.strokeStyle = '#4455cc';
+        g.lineWidth   = 2.8;
+        g.stroke();
+        g.globalAlpha = 1;
+      }
+
+      // Nuclear envelope — thin bright ring
+      g.save();
+      g.shadowColor  = '#4466ff';
+      g.shadowBlur   = 16;
+      g.globalAlpha  = 0.68;
+      g.strokeStyle  = '#5577ff';
+      g.lineWidth    = 3;
+      g.stroke(nucPath);
+      g.shadowBlur   = 0;
+      g.globalAlpha  = 1;
+      g.restore();
+    }
+
+    return oc;
+  }
+
+  // ============================================================
+  // Cell class
+  // ============================================================
+  class Cell {
+    constructor(wx, wy, seed, sampleId, isMitotic) {
+      this.wx       = wx;
+      this.wy       = wy;
+      this.sampleId = sampleId;
+      this.canvas   = preRenderCell(seed, !!isMitotic);
+    }
+
+    draw() {
+      const sx  = (this.wx - panX) * zoom + width  / 2;
+      const sy  = (this.wy - panY) * zoom + height / 2;
+      const sr  = CELL_R_UM * zoom;
+      // Scale the full OC_SIZE canvas so OC_CELL_R maps to sr on screen
+      const dsz = OC_SIZE * (sr / OC_CELL_R);
+
+      // Frustum cull
+      const half = dsz / 2;
+      if (sx + half < 0 || sx - half > width ||
+          sy + half < 0 || sy - half > height) return;
+
+      ctx.drawImage(this.canvas, sx - half, sy - half, dsz, dsz);
+    }
+
+    hitTest(mx, my) {
+      const sx = (this.wx - panX) * zoom + width  / 2;
+      const sy = (this.wy - panY) * zoom + height / 2;
+      const sr = CELL_R_UM * zoom;
+      const dx = mx - sx, dy = my - sy;
+      return dx * dx + dy * dy < sr * sr * 1.15; // slightly generous
+    }
+  }
+
+  // ============================================================
+  // Instantiate cells
+  // ============================================================
+  const sampleCells = samples.map((s, i) =>
+    new Cell(s.wx, s.wy, i * 37 + 7, s.id, i === 4) // index 4 = mitotic cell
+  );
+  const bgCells = bgSeeds.map(b =>
+    new Cell(b.wx, b.wy, b.seed, null, false)
+  );
+  // Draw order: bg cells under sample cells
+  const allCells = [...bgCells, ...sampleCells];
+
+  // ============================================================
+  // Vignette — pre-rendered, rebuilt on resize
+  // ============================================================
+  let vignetteCanvas = null;
+
+  function buildVignette() {
+    vignetteCanvas = new OffscreenCanvas(width, height);
+    const vg       = vignetteCanvas.getContext('2d');
+    const grad     = vg.createRadialGradient(
+      width / 2, height / 2, Math.min(width, height) * 0.22,
+      width / 2, height / 2, Math.max(width, height) * 0.75
+    );
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.82)');
+    vg.fillStyle = grad;
+    vg.fillRect(0, 0, width, height);
+  }
+
+  // ============================================================
+  // Scale bar — uses proper µm values
+  // ============================================================
+  function drawScaleBar() {
+    const niceVals   = [0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500];
+    const barMicrons = niceVals.find(v => v * zoom >= 68) ?? 500;
+    const barPx      = barMicrons * zoom;
+    const bx         = width  - 28 - barPx;
+    const by         = height - 28;
+
+    ctx.save();
+    ctx.globalAlpha   = 0.78;
+    ctx.strokeStyle   = '#ffffff';
+    ctx.lineWidth     = 2;
+    ctx.lineCap       = 'square';
+    ctx.beginPath();
+    ctx.moveTo(bx,        by);
+    ctx.lineTo(bx + barPx, by);
+    ctx.moveTo(bx,         by - 5); ctx.lineTo(bx,         by + 5);
+    ctx.moveTo(bx + barPx, by - 5); ctx.lineTo(bx + barPx, by + 5);
+    ctx.stroke();
+    ctx.fillStyle    = '#ffffff';
+    ctx.font         = '11px "JetBrains Mono", monospace';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'bottom';
+    const label = barMicrons >= 1 ? `${Math.round(barMicrons)}µm` : `${barMicrons}µm`;
+    ctx.fillText(label, bx + barPx / 2, by - 8);
+    ctx.restore();
+  }
+
+  // ============================================================
+  // Main render
+  // ============================================================
+  function render() {
+    ctx.fillStyle = '#05050b';
+    ctx.fillRect(0, 0, width, height);
+
+    // Cells (bg first, samples on top)
+    allCells.forEach(c => c.draw());
+
+    // Vignette
+    if (vignetteCanvas) ctx.drawImage(vignetteCanvas, 0, 0);
+
     // Scale bar
-    function drawScaleBar() {
-      const scaleMicrons = 100 / zoom;
-      const barWidth = scaleMicrons * zoom * 50;
-      const barX = width - 32 - barWidth;
-      const barY = height - 32;
-      
-      ctx.restore();
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(barX, barY, barWidth, 2);
-      ctx.font = '10px JetBrains Mono';
-      ctx.fillText(`${scaleMicrons}μm`, barX, barY - 10);
-    }
-    
-    // Animation loop - only runs when page is visible
-    let isPageVisible = true;
-    document.addEventListener('visibilitychange', () => {
-      isPageVisible = !document.hidden;
+    drawScaleBar();
+  }
+
+  // ============================================================
+  // Render scheduling — dirty-flag + smooth zoom animation
+  // ============================================================
+  function scheduleRender() {
+    if (renderPending) return;
+    renderPending = true;
+    requestAnimationFrame(() => {
+      renderPending = false;
+      const dz = targetZoom - zoom;
+      if (Math.abs(dz) > 0.0008) {
+        zoom += dz * 0.18;
+        updateZoomLabel();
+        scheduleRender();
+      } else {
+        zoom = targetZoom;
+        updateZoomLabel();
+      }
+      render();
     });
-    
-    function animate() {
-      if (!isPageVisible) {
-        animationId = requestAnimationFrame(animate);
-        return;
-      }
-      
-      time += 0.016;
-      
-      // Clear
-      ctx.fillStyle = '#0a0a0f';
-      ctx.fillRect(0, 0, width, height);
-      
-      // Draw particles
-      particles.forEach(p => {
-        p.update();
-        p.draw();
-      });
-      
-      // Draw reticle
-      drawReticle();
-      
-      // Draw cells
-      cells.forEach(cell => {
-        cell.update(time);
-        cell.draw(time);
-      });
-      
-      // Draw scale bar
-      drawScaleBar();
-      
-      // Vignette
-      const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height) * 0.7);
-      gradient.addColorStop(0, 'transparent');
-      gradient.addColorStop(1, 'rgba(0,0,0,0.7)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, width, height);
-      
-      animationId = requestAnimationFrame(animate);
+  }
+
+  function updateZoomLabel() {
+    document.getElementById('zoomLevel').textContent =
+      Math.round(zoom * PIXEL_SIZE_UM);
+  }
+
+  // ============================================================
+  // Resize
+  // ============================================================
+  function resize() {
+    width  = canvas.width  = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    buildVignette();
+    scheduleRender();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ============================================================
+  // Input events
+  // ============================================================
+
+  // Scroll to zoom (zoom toward cursor position)
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.10 : 0.91;
+    targetZoom   = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, targetZoom * factor));
+    if (!hasInteracted) {
+      hasInteracted = true;
+      document.getElementById('instructions').classList.add('hidden');
     }
-    animate();
-    
-    // Interactions
-    canvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const zoomFactor = e.deltaY > 0 ? 0.95 : 1.05;
-      zoom = Math.max(0.1, Math.min(60, zoom * zoomFactor));
-      document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
-      
-      if (!hasInteracted) {
-        hasInteracted = true;
-        document.getElementById('instructions').classList.add('hidden');
-      }
-    }, { passive: false });
-    
-    canvas.addEventListener('mousedown', (e) => {
+    scheduleRender();
+  }, { passive: false });
+
+  // Mouse pan
+  canvas.addEventListener('mousedown', e => {
+    isDragging = true;
+    hasMoved   = false;
+    lastMX     = e.clientX;
+    lastMY     = e.clientY;
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    const dx = e.clientX - lastMX;
+    const dy = e.clientY - lastMY;
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) hasMoved = true;
+    panX -= dx / zoom;
+    panY -= dy / zoom;
+    lastMX = e.clientX;
+    lastMY = e.clientY;
+    scheduleRender();
+  });
+
+  canvas.addEventListener('mouseup',    () => { isDragging = false; });
+  canvas.addEventListener('mouseleave', () => { isDragging = false; });
+
+  // Touch pan
+  canvas.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
       isDragging = true;
-      dragStart = { x: e.clientX, y: e.clientY };
-      panStart = { x: panX, y: panY };
-    });
-    
-    canvas.addEventListener('mousemove', (e) => {
-      if (isDragging) {
-        const dx = (e.clientX - dragStart.x) / zoom;
-        const dy = (e.clientY - dragStart.y) / zoom;
-        panX = panStart.x - dx;
-        panY = panStart.y - dy;
-      }
-    });
-    
-    canvas.addEventListener('mouseup', () => { isDragging = false; });
-    canvas.addEventListener('mouseleave', () => { isDragging = false; });
-    
-    // Click to discover sample
-    canvas.addEventListener('click', (e) => {
-      if (isDragging) return;
-      
-      const mx = e.clientX;
-      const my = e.clientY;
-      
-      for (const cell of cells) {
-        if (cell.checkClick(mx, my) && !collectedSamples.has(cell.sampleId)) {
-          collectedSamples.add(cell.sampleId);
-          
-          // Update orb
-          const orb = document.getElementById(`orb-${cell.sampleId}`);
-          if (orb) orb.classList.add('collected');
-          
-          // Update counter
-          document.getElementById('collectedCount').textContent = collectedSamples.size;
-          
-          // Show info panel
-          const sample = samples.find(s => s.id === cell.sampleId);
-          if (sample) {
-            document.getElementById('infoTitle').textContent = sample.name;
-            document.getElementById('infoText').textContent = sample.description;
-            document.getElementById('infoPanel').classList.add('visible');
-          }
+      hasMoved   = false;
+      lastMX     = e.touches[0].clientX;
+      lastMY     = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  canvas.addEventListener('touchmove', e => {
+    if (!isDragging || e.touches.length !== 1) return;
+    e.preventDefault();
+    const dx = e.touches[0].clientX - lastMX;
+    const dy = e.touches[0].clientY - lastMY;
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) hasMoved = true;
+    panX -= dx / zoom;
+    panY -= dy / zoom;
+    lastMX = e.touches[0].clientX;
+    lastMY = e.touches[0].clientY;
+    scheduleRender();
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', () => { isDragging = false; });
+
+  // Click — discover samples
+  canvas.addEventListener('click', e => {
+    if (hasMoved) return;
+    const mx = e.clientX, my = e.clientY;
+    for (const cell of sampleCells) {
+      if (cell.hitTest(mx, my) && !collectedSamples.has(cell.sampleId)) {
+        collectedSamples.add(cell.sampleId);
+        const orb = document.getElementById(`orb-${cell.sampleId}`);
+        if (orb) orb.classList.add('collected');
+        document.getElementById('collectedCount').textContent = collectedSamples.size;
+        const sample = samples.find(s => s.id === cell.sampleId);
+        if (sample) {
+          document.getElementById('infoTitle').textContent = sample.name;
+          document.getElementById('infoText').textContent  = sample.description;
+          document.getElementById('infoPanel').classList.add('visible');
         }
+        break;
       }
-    });
-    
-    // Zoom buttons
-    document.getElementById('zoomIn').addEventListener('click', () => {
-      zoom = Math.min(60, zoom * 1.2);
-      document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
-    });
-    
-    document.getElementById('zoomOut').addEventListener('click', () => {
-      zoom = Math.max(0.1, zoom / 1.2);
-      document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
-    });
-    
-    document.getElementById('resetView').addEventListener('click', () => {
-      zoom = 0.5;
-      panX = 0;
-      panY = 0;
-      document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
-    });
-    
-    // Close info panel
-    document.getElementById('closePanel').addEventListener('click', () => {
+    }
+  });
+
+  // Zoom buttons
+  document.getElementById('zoomIn').addEventListener('click', () => {
+    targetZoom = Math.min(MAX_ZOOM, targetZoom * 1.5);
+    scheduleRender();
+  });
+  document.getElementById('zoomOut').addEventListener('click', () => {
+    targetZoom = Math.max(MIN_ZOOM, targetZoom / 1.5);
+    scheduleRender();
+  });
+  document.getElementById('resetView').addEventListener('click', () => {
+    targetZoom = DEFAULT_ZOOM;
+    panX = 0;
+    panY = 0;
+    scheduleRender();
+  });
+
+  // Info panel
+  document.getElementById('closePanel').addEventListener('click', () =>
+    document.getElementById('infoPanel').classList.remove('visible')
+  );
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape')
       document.getElementById('infoPanel').classList.remove('visible');
-    });
-    
-    // Keyboard
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        document.getElementById('infoPanel').classList.remove('visible');
-      }
-    });
+  });
+
   </script>
 </body>
 </html>
